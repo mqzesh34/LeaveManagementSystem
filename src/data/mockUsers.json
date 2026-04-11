@@ -1,0 +1,199 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "firstName": "Berk",
+      "lastName": "Kayhı",
+      "email": "berk@example.com",
+      "password": "123456",
+      "role": "Yönetici"
+    },
+    {
+      "id": 2,
+      "firstName": "Ahmet",
+      "lastName": "Yılmaz",
+      "email": "ahmet@example.com",
+      "password": "123456",
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "startDate": "2026-04-15",
+          "days": 5,
+          "reason": "Yıllık izin"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "firstName": "Ayşe",
+      "lastName": "Demir",
+      "email": "ayse@example.com",
+      "password": "123456",
+      "role": "İK Müdürü"
+    },
+    {
+      "id": 4,
+      "firstName": "Mehmet",
+      "lastName": "Şahin",
+      "email": "mehmet@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 5,
+      "firstName": "Fatma",
+      "lastName": "Kaya",
+      "email": "fatma@example.com",
+      "password": "123456",
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "startDate": "2026-04-20",
+          "days": 3,
+          "reason": "Yıllık izin"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "firstName": "İbrahim",
+      "lastName": "Çelik",
+      "email": "ibrahim@example.com",
+      "password": "123456",
+      "role": "Müdür"
+    },
+    {
+      "id": 7,
+      "firstName": "Zeynep",
+      "lastName": "Gül",
+      "email": "zeynep@example.com",
+      "password": "123456",
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "startDate": "2026-04-25",
+          "days": 7,
+          "reason": "Yıllık izin"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "firstName": "Emre",
+      "lastName": "Acar",
+      "email": "emre@example.com",
+      "password": "123456",
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "startDate": "2026-05-05",
+          "days": 2,
+          "reason": "Yıllık izin"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "firstName": "Selin",
+      "lastName": "Arslan",
+      "email": "selin@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 10,
+      "firstName": "Osman",
+      "lastName": "Küçük",
+      "email": "osman@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 11,
+      "firstName": "Müge",
+      "lastName": "Özdemir",
+      "email": "muge@example.com",
+      "password": "123456",
+      "role": "İK Müdürü"
+    },
+    {
+      "id": 12,
+      "firstName": "Can",
+      "lastName": "Sarani",
+      "email": "can@example.com",
+      "password": "123456",
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "startDate": "2026-04-27",
+          "days": 4,
+          "reason": "Yıllık izin"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "firstName": "Gülsen",
+      "lastName": "Yıldız",
+      "email": "gulsen@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 14,
+      "firstName": "Serkan",
+      "lastName": "Köse",
+      "email": "serkan@example.com",
+      "password": "123456",
+      "role": "Müdür"
+    },
+    {
+      "id": 15,
+      "firstName": "Pınar",
+      "lastName": "Çetinkaya",
+      "email": "pinar@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 16,
+      "firstName": "Deniz",
+      "lastName": "Akça",
+      "email": "deniz@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 17,
+      "firstName": "Hande",
+      "lastName": "Kıran",
+      "email": "hande@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 18,
+      "firstName": "Kerem",
+      "lastName": "Döner",
+      "email": "kerem@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 19,
+      "firstName": "Oya",
+      "lastName": "Yalçın",
+      "email": "oya@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    },
+    {
+      "id": 20,
+      "firstName": "Rıdvan",
+      "lastName": "Işık",
+      "email": "ridvan@example.com",
+      "password": "123456",
+      "role": "Çalışan"
+    }
+  ]
+}
