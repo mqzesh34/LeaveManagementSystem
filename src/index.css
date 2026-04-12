@@ -4,6 +4,7 @@
   font-family: "Crimson Pro", serif;
   font-optical-sizing: auto;
   font-style: normal;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (min-width: 1600px) {

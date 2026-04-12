@@ -5,14 +5,41 @@ import tatiller from "../data/tatiller.json";
 import {
   BadgeInfo,
   ClockArrowUp,
-  Users,
+  FileChartColumnIncreasing,
   AlarmClockCheck,
   Palmtree,
 } from "lucide-react";
 import { DateTime } from "luxon";
-import { useEffect, useRef, useState } from "react";
-
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Pie, PieChart, ResponsiveContainer, Cell } from "recharts";
 const MainPage = () => {
+  const stats = useMemo(() => {
+    let approved = 0;
+    let rejected = 0;
+    let pending = 0;
+
+    mockUsers.users.forEach((user) => {
+      user.leaves?.forEach((leave) => {
+        if (leave.status === "approved") approved++;
+        else if (leave.status === "rejected") rejected++;
+        else if (leave.status === "pending") pending++;
+      });
+    });
+
+    return {
+      approved,
+      rejected,
+      pending,
+      total: approved + rejected + pending,
+    };
+  }, []);
+
+  const data = [
+    { name: "Onaylandı", value: stats.approved, fill: "#10b981" },
+    { name: "Reddedildi", value: stats.rejected, fill: "#f43f5e" },
+    { name: "Bekliyor", value: stats.pending, fill: "#f59e0b" },
+  ];
+
   const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
 
   // --- AI Eklentisi Başlangıcı: Ekran boyutuna göre liste elemanı sayısını hesaplama ---
@@ -69,43 +96,70 @@ const MainPage = () => {
       <Sidebar />
       <div className="no-scrollbar absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
         <div className="w-[33%] h-full p-6  rounded-xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="flex items-center  gap-2 mb-3">
-            <Users className="w-7 h-7 text-gray-800" />
+          <div className="flex items-center gap-2 mb-3">
+            <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" />
             <h2 className="text-xl truncate font-bold text-gray-800 underline-offset-5 underline">
-              Çalışanlar
+              İstatistikler
             </h2>
           </div>
-
-          <div
-            ref={employeesRef}
-            className="space-y-2 flex-1 min-h-0 overflow-y-auto no-scrollbar"
-          >
-            {mockUsers.users
-              .filter((user) => user.role === "Çalışan")
-              .slice(0, employeeCount)
-              .map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <img
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
-                      alt={`${user.firstName} ${user.lastName}`}
-                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-md font-semibold text-gray-800 truncate">
-                        {user.firstName} {user.lastName}
-                      </p>
-                    </div>
-                  </div>
+          <div className="flex flex-col w-full h-full">
+            <div className="flex flex-row items-center w-full justify-between gap-4 shrink-0 min-w-0 h-[190px]">
+              <div className="relative w-[160px] h-[160px] flex-shrink-0 non-select select-none pointer-events-none focus:outline-none">
+                <ResponsiveContainer width="100%" height="100%" className="non-select select-none">
+                  <PieChart className="non-select select-none focus:outline-none" style={{ outline: 'none' }}>
+                    <Pie
+                      data={data}
+                      innerRadius="80%"
+                      outerRadius="100%"
+                      cornerRadius={6}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {data.map((entry, index) => (
+                        <Cell key={index} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
+                  <span className="text-4xl font-bold text-gray-800">
+                    {stats.total}
+                  </span>
+                  <span className="text-[11px] text-gray-500 font-bold tracking-tight">
+                    Toplam İstek
+                  </span>
                 </div>
-              ))}
-          </div>
+              </div>
 
-          <ViewAllButton label="Çalışanlara" path="/employees" />
+              <div className="flex flex-col justify-center gap-4 flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pl-2">
+                {data.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between min-w-0"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.fill }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {item.name}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-block flex-shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-1">
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="w-[50%] h-1 mx-auto my-6 rounded-full bg-gray-200"></div>
+          </div>
         </div>
+
         <div className="w-[33%] gap-4 flex flex-col">
           <div className="flex-1 min-h-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <div className="flex items-center gap-2 mb-3">
@@ -114,7 +168,6 @@ const MainPage = () => {
                 Onay Bekleyen İzinler
               </h2>
             </div>
-
             <div
               ref={pendingRef}
               className="space-y-2 flex-1 min-h-0  overflow-y-auto no-scrollbar"
