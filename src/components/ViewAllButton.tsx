@@ -13,7 +13,7 @@ const ViewAllButton = ({ label, path }: ViewAllButtonProps) => {
     <div className="mt-4 flex justify-end">
       <button
         onClick={() => forwardTo(label, path)}
-        className="text-blue-600 hover:text-blue-700 cursor-pointer text-sm font-medium flex items-center gap-1"
+        className="text-blue-600 truncate hover:text-blue-700 cursor-pointer text-sm font-medium flex items-center gap-1"
       >
         Tümünü Görüntüle
         <ArrowRightFromLine className="w-4 h-4" />

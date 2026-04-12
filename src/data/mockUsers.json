@@ -17,9 +17,18 @@
       "role": "Çalışan",
       "leaves": [
         {
+          "id": 1,
           "startDate": "2026-04-15",
           "days": 5,
-          "reason": "Yıllık izin"
+          "reason": "Yıllık izin",
+          "status": "approved"
+        },
+        {
+          "id": 2,
+          "startDate": "2026-05-10",
+          "days": 2,
+          "reason": "Mazeret izni",
+          "status": "pending"
         }
       ]
     },
@@ -37,7 +46,23 @@
       "lastName": "Şahin",
       "email": "mehmet@example.com",
       "password": "123456",
-      "role": "Çalışan"
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "id": 99,
+          "startDate": "2026-04-11",
+          "days": 4,
+          "reason": "Yıllık izin",
+          "status": "approved"
+        },
+        {
+          "id": 3,
+          "startDate": "2026-04-18",
+          "days": 3,
+          "reason": "Sağlık izni",
+          "status": "pending"
+        }
+      ]
     },
     {
       "id": 5,
@@ -48,9 +73,11 @@
       "role": "Çalışan",
       "leaves": [
         {
+          "id": 4,
           "startDate": "2026-04-20",
           "days": 3,
-          "reason": "Yıllık izin"
+          "reason": "Yıllık izin",
+          "status": "approved"
         }
       ]
     },
@@ -71,9 +98,18 @@
       "role": "Çalışan",
       "leaves": [
         {
+          "id": 5,
           "startDate": "2026-04-25",
           "days": 7,
-          "reason": "Yıllık izin"
+          "reason": "Yıllık izin",
+          "status": "approved"
+        },
+        {
+          "id": 6,
+          "startDate": "2026-05-15",
+          "days": 1,
+          "reason": "Mazeret izni",
+          "status": "pending"
         }
       ]
     },
@@ -86,9 +122,11 @@
       "role": "Çalışan",
       "leaves": [
         {
+          "id": 7,
           "startDate": "2026-05-05",
           "days": 2,
-          "reason": "Yıllık izin"
+          "reason": "Yıllık izin",
+          "status": "approved"
         }
       ]
     },
@@ -98,7 +136,16 @@
       "lastName": "Arslan",
       "email": "selin@example.com",
       "password": "123456",
-      "role": "Çalışan"
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "id": 8,
+          "startDate": "2026-04-11",
+          "days": 4,
+          "reason": "Evlilik izni",
+          "status": "approved"
+        }
+      ]
     },
     {
       "id": 10,
@@ -106,7 +153,16 @@
       "lastName": "Küçük",
       "email": "osman@example.com",
       "password": "123456",
-      "role": "Çalışan"
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "id": 9,
+          "startDate": "2026-04-28",
+          "days": 1,
+          "reason": "Mazeret izni",
+          "status": "pending"
+        }
+      ]
     },
     {
       "id": 11,
@@ -125,9 +181,18 @@
       "role": "Çalışan",
       "leaves": [
         {
-          "startDate": "2026-04-27",
-          "days": 4,
-          "reason": "Yıllık izin"
+          "id": 10,
+          "startDate": "2026-04-10",
+          "days": 12,
+          "reason": "Yıllık izin",
+          "status": "approved"
+        },
+        {
+          "id": 11,
+          "startDate": "2026-05-20",
+          "days": 3,
+          "reason": "Babalık izni",
+          "status": "pending"
         }
       ]
     },
@@ -153,7 +218,16 @@
       "lastName": "Çetinkaya",
       "email": "pinar@example.com",
       "password": "123456",
-      "role": "Çalışan"
+      "role": "Çalışan",
+      "leaves": [
+        {
+          "id": 12,
+          "startDate": "2026-05-02",
+          "days": 5,
+          "reason": "Yıllık izin",
+          "status": "rejected"
+        }
+      ]
     },
     {
       "id": 16,
