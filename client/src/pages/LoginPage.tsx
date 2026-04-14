@@ -2,52 +2,54 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Mail, KeyRound } from "lucide-react";
-import mockUsers from "../data/mockUsers.json";
+import { useAuth } from "../context/authContext.tsx";
+import { useNavigation } from "../hooks/useNavigation";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
+  const [isRememberMe, setRemember] = useState(false);
+  const { forwardTo } = useNavigation();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!email || !password) {
       toast.error("Tüm alanların doldurulması zorunludur !", {
-        style: {
-          border: "2px solid",
-          padding: "16px",
-        },
+        style: { border: "2px solid", padding: "16px" },
       });
       return;
     }
+
     try {
-      // Mock kullanıcı doğrulaması, gerçek bir uygulamada bu API ile yapılacaktır.
-      const user = mockUsers.users.find(
-        (u) => u.email === email && u.password === password,
-      );
-
-      if (!user) {
-        toast.error("E-posta veya şifre hatalı !", {
-          style: {
-            border: "2px solid",
-            padding: "16px",
-          },
-        });
-        return;
-      }
-
-      localStorage.setItem("user", JSON.stringify(user));
-      toast.success("Giriş başarılı, yönlendiriliyorsunuz..", {
-        style: {
-          border: "2px solid",
-          padding: "16px",
+      console.log("Gönderilen veri:", { email, password, isRememberMe });
+      const response = await fetch("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email, password, isRememberMe }),
+        credentials: "include",
       });
-      navigate("/main");
-    } catch (e) {
-      console.error(e);
+
+      const data = await response.json();
+
+      if (data.success) {
+        login(data.user);
+
+        forwardTo("Ana sayfa", "/main");
+      } else {
+        toast.error(data.message || "Giriş yapılamadı!", {
+          style: { border: "2px solid", padding: "16px" },
+        });
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+      toast.error("Sunucuya bağlanılamadı!", {
+        style: { border: "2px solid", padding: "16px" },
+      });
     }
   };
 
@@ -96,7 +98,7 @@ const LoginPage = () => {
                 <input
                   type="checkbox"
                   name="rememberMe"
-                  checked={remember}
+                  checked={isRememberMe}
                   onChange={(e) => setRemember(e.target.checked)}
                   className="w-5 h-5"
                 />

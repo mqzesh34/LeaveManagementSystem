@@ -3,25 +3,21 @@ import { useState } from "react";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
 import { Home, LogOut, Calendar1, Users } from "lucide-react";
+import { useAuth } from "../context/authContext.tsx";
+import { useNavigation } from "../hooks/useNavigation";
 
 const Sidebar = () => {
-  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
-  const [user, setUser] = useState<any>(null);
-
-  const logout = () => {
-    localStorage.clear();
-    navigate("/login");
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { forwardTo } = useNavigation();
+  const handleLogout = () => {
+    forwardTo("Giriş", "/");
+    setTimeout(() => {
+      logout();
+    }, 1600);
   };
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
   useEffect(() => {
     const updateDateTime = () => {
       const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
@@ -99,7 +95,7 @@ const Sidebar = () => {
               <p className="text-2xl font-bold text-gray-900">{currentTime}</p>
             </div>
             <button
-              onClick={() => logout()}
+              onClick={handleLogout}
               className={`flex items-center justify-center w-10 h-10 rounded-lg duration-400 text-red-700 bg-red-100 hover:bg-red-200 border-red-200 border-2`}
             >
               <LogOut className="text-2xl text-center" />

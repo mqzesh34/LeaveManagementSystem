@@ -1,7 +1,7 @@
 import Sidebar from "../components/Sidebar";
 import ViewAllButton from "../components/ViewAllButton";
-import mockUsers from "../data/mockUsers.json";
 import tatiller from "../data/tatiller.json";
+import { useAuth } from "../context/authContext";
 import {
   BadgeInfo,
   ClockArrowUp,
@@ -12,67 +12,17 @@ import {
 import { DateTime } from "luxon";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Pie, PieChart, ResponsiveContainer, Cell } from "recharts";
+
 const MainPage = () => {
-  const { stats, chartData } = useMemo(() => {
-    // Veri tabanı bağlantısı olmadığı için mock datalar üzerinden istatistik hesaplama yapıyoruz. Gerçek bir uygulamada bu veriler API çağrılarıyla backend tarafından sağlanacak.
-    let approved = 0;
-    let rejected = 0;
-    let pending = 0;
+  const { user: currentUser } = useAuth();
+  const [allData, setAllData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    mockUsers.users.forEach((user) => {
-      user.leaves?.forEach((leave) => {
-        if (leave.status === "approved") approved++;
-        else if (leave.status === "rejected") rejected++;
-        else if (leave.status === "pending") pending++;
-      });
-    });
-
-    const total = approved + rejected + pending;
-
-    return {
-      stats: {
-        approved,
-        rejected,
-        pending,
-        total,
-      },
-      chartData: [
-        { name: "Onaylandı", value: approved, fill: "#10b981" },
-        { name: "Reddedildi", value: rejected, fill: "#f43f5e" },
-        { name: "Bekliyor", value: pending, fill: "#f59e0b" },
-      ],
-    };
-  }, []);
-
-  const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
-
-  const topLeaveUsers = useMemo(() => {
-    // En çok izin kullanan kullanıcıları hesaplıyoruz. Gerçek bir uygulamada bu veriler API çağrılarıyla backend tarafından sağlanacak.
-    return mockUsers.users
-      .map((user) => {
-        const totalApprovedLeaves = (user.leaves || [])
-          .filter((leave) => leave.status === "approved")
-          .reduce((sum, leave) => sum + leave.days, 0);
-
-        return {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          employeeName: `${user.firstName} ${user.lastName}`,
-          totalLeaves: totalApprovedLeaves,
-          totalAllowed: 20,
-        };
-      })
-      .filter((user) => user.totalLeaves > 0)
-      .sort((a, b) => b.totalLeaves - a.totalLeaves);
-  }, []);
-
-  // --- AI Eklentisi Başlangıcı: Ekran boyutuna göre liste elemanı sayısını hesaplama ---
-  const [holidayCount, setHolidayCount] = useState(3);
-  const [leaveCount, setLeaveCount] = useState(3);
-  const [pendingCount, setPendingCount] = useState(3);
-  const [todayLeaveCount, setTodayLeaveCount] = useState(3);
-  const [topLeaveUsersCount, setTopLeaveUsersCount] = useState(3);
+  const [holidayCount, setHolidayCount] = useState(1);
+  const [leaveCount, setLeaveCount] = useState(1);
+  const [pendingCount, setPendingCount] = useState(1);
+  const [todayLeaveCount, setTodayLeaveCount] = useState(1);
+  const [topLeaveUsersCount, setTopLeaveUsersCount] = useState(1);
 
   const holidaysRef = useRef<HTMLDivElement>(null);
   const leavesRef = useRef<HTMLDivElement>(null);
@@ -80,144 +30,222 @@ const MainPage = () => {
   const todayLeaveRef = useRef<HTMLDivElement>(null);
   const topLeaveUsersRef = useRef<HTMLDivElement>(null);
 
-  const pendingLeaves = useMemo(() => {
-    return mockUsers.users
-      .flatMap((user) =>
-        (user.leaves || [])
-          .filter((leave) => leave.status === "pending")
-          .map((leave) => ({
-            leaveId: leave.id,
-            userId: user.id,
-            employeeName: `${user.firstName} ${user.lastName}`,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            startDate: leave.startDate,
-            days: leave.days,
-            reason: leave.reason,
-          })),
-      )
+  const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/api/leaves/dashboard-stats",
+          {
+            credentials: "include",
+          },
+        );
+        const result = await response.json();
+        if (result.success) {
+          setAllData(result.data);
+        }
+      } catch (error) {
+        console.error("Veri çekme hatası:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
+  const { stats, chartData } = useMemo(() => {
+    const leavesOnly = allData.filter((item: any) => item.leaveId !== null);
+    const approved = leavesOnly.filter(
+      (l: any) => l.status === "approved",
+    ).length;
+    const rejected = leavesOnly.filter(
+      (l: any) => l.status === "rejected",
+    ).length;
+    const pending = leavesOnly.filter(
+      (l: any) => l.status === "pending",
+    ).length;
+
+    return {
+      stats: {
+        approved,
+        rejected,
+        pending,
+        total: approved + rejected + pending,
+      },
+      chartData: [
+        { name: "Onaylandı", value: approved, fill: "#10b981" },
+        { name: "Reddedildi", value: rejected, fill: "#f43f5e" },
+        { name: "Bekliyor", value: pending, fill: "#f59e0b" },
+      ],
+    };
+  }, [allData]);
+
+  const allTopLeaveUsers = useMemo(() => {
+    const userMap: Record<string, any> = {};
+    allData.forEach((item: any) => {
+      if (!userMap[item.userId]) {
+        userMap[item.userId] = {
+          id: item.userId,
+          firstName: item.firstName,
+          lastName: item.lastName,
+          employeeName: `${item.firstName} ${item.lastName}`,
+          totalLeaves: 0,
+          totalAllowed: item.totalAllowed || 20,
+        };
+      }
+      if (item.status === "approved" && item.leaveId) {
+        userMap[item.userId].totalLeaves += item.days;
+      }
+    });
+    return Object.values(userMap)
+      .filter((u: any) => u.totalLeaves > 0)
+      .sort((a: any, b: any) => b.totalLeaves - a.totalLeaves);
+  }, [allData]);
+
+  const allPendingLeaves = useMemo(() => {
+    return allData
+      .filter((item: any) => item.status === "pending" && item.leaveId)
+      .map((item: any) => ({
+        leaveId: item.leaveId,
+        employeeName: `${item.firstName} ${item.lastName}`,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        reason: item.reason,
+        startDate: item.startDate,
+        days: item.days,
+      }))
       .sort(
-        (a, b) =>
+        (a: any, b: any) =>
           DateTime.fromISO(a.startDate).toMillis() -
           DateTime.fromISO(b.startDate).toMillis(),
       );
-  }, []);
+  }, [allData]);
 
-  const todayLeaves = useMemo(() => {
-    return mockUsers.users.flatMap((user) =>
-      (user.leaves || [])
-        .filter((leave) => {
-          if (leave.status !== "approved") return false;
-          const start = DateTime.fromISO(leave.startDate).startOf("day");
-          const end = start.plus({ days: leave.days - 1 }).endOf("day");
-          const today = now.startOf("day");
-          return today >= start && today <= end;
-        })
-        .map((leave) => {
-          const startDt = DateTime.fromISO(leave.startDate).startOf("day");
-          const endDt = startDt.plus({ days: leave.days - 1 }).endOf("day");
-          const today = now.startOf("day");
-          const diffDays = Math.floor(today.diff(startDt, "days").days);
-          const remainingDays = leave.days - diffDays;
+  const allTodayLeaves = useMemo(() => {
+    return allData
+      .filter((item: any) => {
+        if (item.status !== "approved" || !item.startDate) return false;
+        const start = DateTime.fromISO(item.startDate).startOf("day");
+        const end = start.plus({ days: item.days - 1 }).endOf("day");
+        return now.startOf("day") >= start && now.startOf("day") <= end;
+      })
+      .map((item: any) => {
+        const startDt = DateTime.fromISO(item.startDate).startOf("day");
+        return {
+          leaveId: item.leaveId,
+          employeeName: `${item.firstName} ${item.lastName}`,
+          firstName: item.firstName,
+          lastName: item.lastName,
+          reason: item.reason,
+          startDateFormatted: startDt.setLocale("tr").toFormat("dd LLL"),
+          endDateFormatted: startDt
+            .plus({ days: item.days - 1 })
+            .setLocale("tr")
+            .toFormat("dd LLL"),
+          remainingDays:
+            item.days -
+            Math.floor(now.startOf("day").diff(startDt, "days").days),
+        };
+      });
+  }, [allData, now]);
 
-          return {
-            leaveId: leave.id,
-            userId: user.id,
-            employeeName: `${user.firstName} ${user.lastName}`,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            reason: leave.reason,
-            startDateFormatted: startDt.setLocale("tr").toFormat("dd LLL"),
-            endDateFormatted: endDt.setLocale("tr").toFormat("dd LLL"),
-            remainingDays: remainingDays,
-          };
-        }),
-    );
-  }, [now]);
-
-  const upcomingHolidays = useMemo(() => {
+  const allUpcomingHolidays = useMemo(() => {
     return tatiller
-      .filter((tatil) => DateTime.fromISO(tatil.tarih) >= now)
+      .filter((tatil: any) => DateTime.fromISO(tatil.tarih) >= now)
       .sort(
-        (a, b) =>
+        (a: any, b: any) =>
           DateTime.fromISO(a.tarih).toMillis() -
           DateTime.fromISO(b.tarih).toMillis(),
       );
   }, [now]);
 
-  const upcomingLeaves = useMemo(() => {
-    return mockUsers.users
-      .flatMap((user) =>
-        (user.leaves || [])
-          .filter((leave) => leave.status === "approved")
-          .map((leave) => ({
-            userId: user.id,
-            employeeName: `${user.firstName} ${user.lastName}`,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            startDate: leave.startDate,
-            days: leave.days,
-            reason: leave.reason,
-          })),
+  const allUpcomingLeaves = useMemo(() => {
+    return allData
+      .filter(
+        (item: any) =>
+          item.status === "approved" &&
+          item.leaveId &&
+          DateTime.fromISO(item.startDate) >= now,
       )
-      .filter((leave) => DateTime.fromISO(leave.startDate) >= now)
+      .map((item: any) => ({
+        employeeName: `${item.firstName} ${item.lastName}`,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        startDate: item.startDate,
+        days: item.days,
+      }))
       .sort(
-        (a, b) =>
+        (a: any, b: any) =>
           DateTime.fromISO(a.startDate).toMillis() -
           DateTime.fromISO(b.startDate).toMillis(),
       );
-  }, [now]);
+  }, [allData, now]);
+
+  const topLeaveUsers = allTopLeaveUsers.slice(0, topLeaveUsersCount);
+  const pendingLeaves = allPendingLeaves.slice(0, pendingCount);
+  const todayLeaves = allTodayLeaves.slice(0, todayLeaveCount);
+  const upcomingHolidays = allUpcomingHolidays.slice(0, holidayCount);
+  const upcomingLeaves = allUpcomingLeaves.slice(0, leaveCount);
 
   useEffect(() => {
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        // Kutunun mevcut yüksekliğine göre sığabilecek eleman sayısının hesaplanması:
-        // Eğer ekran 1600px veya daha büyükse, CSS tarafında zoom %110 olduğu için
-        // elemanların gerçek yüksekliği de oransal olarak (~66px) artmaktadır.
-        const isZoomed =
-          typeof window !== "undefined" && window.innerWidth >= 1600;
-        const isUnzoomed =
-          typeof window !== "undefined" && window.innerWidth <= 1200;
-        const itemHeight = isZoomed ? 66 : isUnzoomed ? 54 : 60; // 60px * 1.1 or 60px * 0.9
-        const height = entry.contentRect.height;
-        const count = Math.max(1, Math.floor((height - 5) / itemHeight));
+    const calculateCounts = () => {
+      const isZoomed = window.innerWidth >= 1600;
+      const isUnzoomed = window.innerWidth <= 1200;
+      const itemHeight = isZoomed ? 66 : isUnzoomed ? 54 : 60;
 
-        if (entry.target === holidaysRef.current) {
-          setHolidayCount(count);
-        } else if (entry.target === leavesRef.current) {
-          setLeaveCount(count);
-        } else if (entry.target === pendingRef.current) {
-          setPendingCount(count);
-        } else if (entry.target === todayLeaveRef.current) {
-          setTodayLeaveCount(count);
-        } else if (entry.target === topLeaveUsersRef.current) {
-          setTopLeaveUsersCount(count);
-        }
-      }
+      const getCount = (ref: React.RefObject<HTMLDivElement | null>) => {
+        if (!ref.current) return 1;
+        const height = ref.current.getBoundingClientRect().height;
+        return Math.max(1, Math.floor((height - 5) / itemHeight));
+      };
+
+      setHolidayCount(getCount(holidaysRef));
+      setLeaveCount(getCount(leavesRef));
+      setPendingCount(getCount(pendingRef));
+      setTodayLeaveCount(getCount(todayLeaveRef));
+      setTopLeaveUsersCount(getCount(topLeaveUsersRef));
+    };
+
+    const observer = new ResizeObserver(() => {
+      window.requestAnimationFrame(calculateCounts);
     });
 
-    if (holidaysRef.current) observer.observe(holidaysRef.current);
-    if (leavesRef.current) observer.observe(leavesRef.current);
-    if (pendingRef.current) observer.observe(pendingRef.current);
-    if (todayLeaveRef.current) observer.observe(todayLeaveRef.current);
-    if (topLeaveUsersRef.current) observer.observe(topLeaveUsersRef.current);
+    const refs = [
+      holidaysRef,
+      leavesRef,
+      pendingRef,
+      todayLeaveRef,
+      topLeaveUsersRef,
+    ];
+    refs.forEach((ref) => {
+      if (ref.current) observer.observe(ref.current);
+    });
 
+    calculateCounts();
     return () => observer.disconnect();
-  }, []);
-  // --- AI Eklentisi Sonu ---
+  }, [loading]);
 
+  if (loading)
+    return (
+      <div className="flex h-screen items-center justify-center font-bold text-gray-500">
+        Veriler hazırlanıyor...
+      </div>
+    );
+
+  if (!currentUser && false) console.log(currentUser);
   return (
     <>
       <Sidebar />
       <div className="no-scrollbar absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
-        <div className="w-[33%] h-full p-6  rounded-xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="w-[33%] p-6  rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" />
             <h2 className="text-xl truncate font-bold text-gray-800 underline-offset-5 underline">
               İstatistikler
             </h2>
           </div>
-          <div className="flex flex-col w-full h-full">
+          <div className="flex flex-col w-full flex-1 min-h-0">
             <div className="flex flex-row items-center w-full justify-between gap-4 shrink-0 min-w-0 h-47.5">
               <div className="relative w-40 h-40 shrink-0 non-select select-none pointer-events-none focus:outline-none">
                 <ResponsiveContainer
@@ -279,9 +307,9 @@ const MainPage = () => {
             </div>
 
             <div className="w-[50%] h-1 mx-auto my-6 rounded-full bg-gray-200 shrink-0"></div>
-            <div className="flex items-center gap-2 mb-3 shrink-0">
+            <div className="flex items-center justify-center gap-2 mb-3 shrink-0">
               <h2 className="text-xl truncate font-bold text-gray-800">
-                En Çok İzin Kullanan Çalışanlar
+                - En Çok İzin Kullanan Çalışanlar -
               </h2>
             </div>
             <div
@@ -497,7 +525,7 @@ const MainPage = () => {
                 </div>
               ))}
             </div>
-            
+
             <ViewAllButton label="Takvime" path="/calendar" />
           </div>
         </div>
