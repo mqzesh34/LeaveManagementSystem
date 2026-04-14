@@ -12,3 +12,9 @@
     zoom: 110%;
   }
 }
+@media (max-width: 1200px) {
+  body {
+    zoom: 90%;
+  }
+}
+
