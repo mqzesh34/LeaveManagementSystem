@@ -20,7 +20,7 @@ const MainPage = () => {
   const [allData, setAllData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [holidayCount, setHolidayCount] = useState(1);
+  const [holidayCount] = useState(3);
   const [leaveCount, setLeaveCount] = useState(1);
   const [pendingCount, setPendingCount] = useState(1);
   const [todayLeaveCount, setTodayLeaveCount] = useState(1);
@@ -189,7 +189,7 @@ const MainPage = () => {
     const calculateCounts = () => {
       const isZoomed = window.innerWidth >= 1600;
       const isUnzoomed = window.innerWidth <= 1200;
-      const itemHeight = isZoomed ? 66 : isUnzoomed ? 54 : 60;
+      const itemHeight = isZoomed ? 66 : isUnzoomed ? 54 : 62;
 
       const getCount = (ref: React.RefObject<HTMLDivElement | null>) => {
         if (!ref.current) return 1;
@@ -197,7 +197,6 @@ const MainPage = () => {
         return Math.max(1, Math.floor((height - 5) / itemHeight));
       };
 
-      setHolidayCount(getCount(holidaysRef));
       setLeaveCount(getCount(leavesRef));
       setPendingCount(getCount(pendingRef));
       setTodayLeaveCount(getCount(todayLeaveRef));
@@ -208,13 +207,7 @@ const MainPage = () => {
       window.requestAnimationFrame(calculateCounts);
     });
 
-    const refs = [
-      holidaysRef,
-      leavesRef,
-      pendingRef,
-      todayLeaveRef,
-      topLeaveUsersRef,
-    ];
+    const refs = [leavesRef, pendingRef, todayLeaveRef, topLeaveUsersRef];
     refs.forEach((ref) => {
       if (ref.current) observer.observe(ref.current);
     });
@@ -359,7 +352,7 @@ const MainPage = () => {
         </div>
 
         <div className="w-[33%] gap-4 flex flex-col">
-          <div className="flex-1 min-h-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="flex-1  p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <div className="flex items-center gap-2 mb-3">
               <AlarmClockCheck className="w-7 h-7 text-rose-600" />
               <h2 className="text-xl truncate font-bold text-gray-800 underline-offset-5 underline">
@@ -400,7 +393,11 @@ const MainPage = () => {
               ))}
             </div>
 
-            <ViewAllButton label="İzin yönetim" path="/leaves" />
+            <ViewAllButton
+              label="İzin yönetim"
+              path="/leaves"
+              buttonText="İzinleri Yönet"
+            />
           </div>
           <div className="flex-1 min-h-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <div className="flex items-center gap-2 mb-3">
@@ -445,11 +442,12 @@ const MainPage = () => {
             <ViewAllButton
               label="Takvim"
               path={`/calendar?date=${today}&view=timeGridDay`}
+              buttonText="Bugünü Takvimde Aç"
             />
           </div>
         </div>
         <div className="w-[33%]  gap-4 flex flex-col">
-          <div className="flex-1 min-h-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="shrink-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <div className="flex items-center gap-2 mb-3">
               <BadgeInfo className="w-7 h-7 text-blue-500" />
               <h2 className="text-xl truncate font-bold text-gray-800 underline-offset-5 underline">
@@ -482,6 +480,11 @@ const MainPage = () => {
                 </div>
               ))}
             </div>
+            <ViewAllButton
+              label="Takvim"
+              path="/calendar?mode=holidays"
+              buttonText="Resmi Tatilleri Görüntüle"
+            />
           </div>
           <div className="flex-1 min-h-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <div className="flex items-center gap-2 mb-3">
@@ -523,8 +526,6 @@ const MainPage = () => {
                 </div>
               ))}
             </div>
-
-            <ViewAllButton label="Takvim" path="/calendar" />
           </div>
         </div>
       </div>

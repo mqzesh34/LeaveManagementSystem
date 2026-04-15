@@ -21,6 +21,8 @@ const CalendarPage = () => {
   const [events, setEvents] = useState<any[]>([]);
   const calendarRef = useRef<any>(null);
   const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const holidaysOnlyMode = params.get("mode") === "holidays";
 
   useEffect(() => {
     api.get("/leaves/dashboard-stats")
@@ -44,31 +46,33 @@ const CalendarPage = () => {
           }
         });
 
-        data
-          .filter((leave: any) => leave.status !== "rejected")
-          .forEach((leave: any) => {
-            for (let i = 0; i < leave.days; i++) {
-              const eventDate = new Date(leave.startDate);
-              eventDate.setDate(eventDate.getDate() + 1 + i);
-              mappedEvents.push({
-                title: `${leave.firstName} ${leave.lastName}`,
-                start: eventDate.toISOString().split("T")[0],
-                allDay: true,
-                backgroundColor: statusColor[leave.status],
-                borderColor: "transparent",
-                extendedProps: {
-                  reason: leave.reason,
-                  status: leave.status,
-                  avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(leave.firstName + " " + leave.lastName)}`,
-                  isHoliday: false,
-                },
-              });
-            }
-          });
+        if (!holidaysOnlyMode) {
+          data
+            .filter((leave: any) => leave.status !== "rejected")
+            .forEach((leave: any) => {
+              for (let i = 0; i < leave.days; i++) {
+                const eventDate = new Date(leave.startDate);
+                eventDate.setDate(eventDate.getDate() + 1 + i);
+                mappedEvents.push({
+                  title: `${leave.firstName} ${leave.lastName}`,
+                  start: eventDate.toISOString().split("T")[0],
+                  allDay: true,
+                  backgroundColor: statusColor[leave.status],
+                  borderColor: "transparent",
+                  extendedProps: {
+                    reason: leave.reason,
+                    status: leave.status,
+                    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(leave.firstName + " " + leave.lastName)}`,
+                    isHoliday: false,
+                  },
+                });
+              }
+            });
+        }
 
         setEvents(mappedEvents);
       });
-  }, []);
+  }, [holidaysOnlyMode]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
