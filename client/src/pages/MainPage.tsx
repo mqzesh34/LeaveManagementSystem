@@ -13,6 +13,8 @@ import { DateTime } from "luxon";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Pie, PieChart, ResponsiveContainer, Cell } from "recharts";
 
+import { api } from "../services/api";
+
 const MainPage = () => {
   const { user: currentUser } = useAuth();
   const [allData, setAllData] = useState<any[]>([]);
@@ -31,17 +33,12 @@ const MainPage = () => {
   const topLeaveUsersRef = useRef<HTMLDivElement>(null);
 
   const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3000/api/leaves/dashboard-stats",
-          {
-            credentials: "include",
-          },
-        );
-        const result = await response.json();
+        const result = await api.get("/leaves/dashboard-stats");
         if (result.success) {
           setAllData(result.data);
         }
@@ -55,7 +52,7 @@ const MainPage = () => {
   }, []);
 
   const { stats, chartData } = useMemo(() => {
-    const leavesOnly = allData.filter((item: any) => item.leaveId !== null);
+    const leavesOnly = allData.filter((item: any) => item.leaveId);
     const approved = leavesOnly.filter(
       (l: any) => l.status === "approved",
     ).length;
@@ -238,7 +235,7 @@ const MainPage = () => {
     <>
       <Sidebar />
       <div className="no-scrollbar absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
-        <div className="w-[33%] p-6  rounded-xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="w-[33%] p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" />
             <h2 className="text-xl truncate font-bold text-gray-800 underline-offset-5 underline">
@@ -445,7 +442,10 @@ const MainPage = () => {
               ))}
             </div>
 
-            <ViewAllButton label="Tümünü" path="/leaves" />
+            <ViewAllButton
+              label="Takvim"
+              path={`/calendar?date=${today}&view=timeGridDay`}
+            />
           </div>
         </div>
         <div className="w-[33%]  gap-4 flex flex-col">
@@ -482,8 +482,6 @@ const MainPage = () => {
                 </div>
               ))}
             </div>
-
-            <ViewAllButton label="Takvime" path="/calendar" />
           </div>
           <div className="flex-1 min-h-0 p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <div className="flex items-center gap-2 mb-3">
@@ -526,7 +524,7 @@ const MainPage = () => {
               ))}
             </div>
 
-            <ViewAllButton label="Takvime" path="/calendar" />
+            <ViewAllButton label="Takvim" path="/calendar" />
           </div>
         </div>
       </div>

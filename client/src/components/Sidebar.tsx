@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Home, LogOut, Calendar1, Users } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
 import { useNavigation } from "../hooks/useNavigation";
+import { authApi } from "../services/api";
 
 const Sidebar = () => {
   const [currentTime, setCurrentTime] = useState("");
@@ -12,11 +13,10 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { forwardTo } = useNavigation();
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authApi.logout();
+    logout();
     forwardTo("Giriş", "/");
-    setTimeout(() => {
-      logout();
-    }, 1600);
   };
   useEffect(() => {
     const updateDateTime = () => {
@@ -32,13 +32,13 @@ const Sidebar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const capitalize = (str: string) =>
-    str.charAt(0).toUpperCase() + str.slice(1);
+  const capitalize = (str: string | undefined) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
   const menuItems = [
     { name: "AnaSayfa", href: "/main", icon: Home },
     { name: "Takvim", href: "/calendar", icon: Calendar1 },
-    { name: "Çalışanlar", href: "/employees", icon: Users },
+
   ];
 
   return (
@@ -77,9 +77,9 @@ const Sidebar = () => {
                   onClick={() => navigate(item.href)}
                   className={`flex items-center w-full px-4 py-3 rounded-lg duration-400 ${
                     location.pathname === item.href
-                      ? "bg-gray-200 text-gray-800 border-2 border-gray-800"
-                      : "text-gray-700 hover:bg-gray-100 border-gray-100 border-2"
-                  }`}
+                    ? "bg-gray-200 text-gray-800 border-2 border-gray-800"
+                    : "text-gray-700 hover:bg-gray-100 border-gray-100 border-2"
+                    }`}
                 >
                   <item.icon size={24} className="mr-3" />
                   {item.name}

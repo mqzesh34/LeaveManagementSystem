@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, KeyRound } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
 import { useNavigation } from "../hooks/useNavigation";
+import { authApi } from "../services/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -24,30 +25,19 @@ const LoginPage = () => {
     }
 
     try {
-      console.log("Gönderilen veri:", { email, password, isRememberMe });
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, isRememberMe }),
-        credentials: "include",
-      });
-
-      const data = await response.json();
+      const data = await authApi.login({ email, password, isRememberMe });
 
       if (data.success) {
         login(data.user);
-
         forwardTo("Ana sayfa", "/main");
       } else {
         toast.error(data.message || "Giriş yapılamadı!", {
           style: { border: "2px solid", padding: "16px" },
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login Error:", error);
-      toast.error("Sunucuya bağlanılamadı!", {
+      toast.error(error.message || "Sunucuya bağlanılamadı!", {
         style: { border: "2px solid", padding: "16px" },
       });
     }

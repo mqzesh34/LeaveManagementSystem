@@ -18,3 +18,27 @@
   }
 }
 
+.fc-scrollgrid {
+  border: none !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.fc-scrollgrid td,
+.fc-scrollgrid th {
+  border-left: none !important;
+  border-top: none !important;
+  border-right: 1px solid #e5e7eb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.fc-scrollgrid td:last-child,
+.fc-scrollgrid th:last-child {
+  border-right: none !important;
+}
+
+.fc-scrollgrid-liquid {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}

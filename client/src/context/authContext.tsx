@@ -1,16 +1,19 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { authApi } from "../services/api";
 
 interface User {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   role: string;
+  email: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,32 +22,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/auth/me", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const data = await authApi.verify();
+        if (data.success) {
           setUser(data.user);
         }
       } catch (err) {
         console.log("Aktif oturum bulunamadı.");
+      } finally {
+        setLoading(false);
       }
     };
     checkUser();
   }, []);
 
-  const login = (userData: User) => setUser(userData);
+  const login = (userData: User) => {
+    setUser(userData);
+  };
+
   const logout = () => {
-    cookieStore.delete("token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
