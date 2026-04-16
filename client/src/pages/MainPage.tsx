@@ -187,9 +187,8 @@ const MainPage = () => {
 
   useEffect(() => {
     const calculateCounts = () => {
-      const isZoomed = window.innerWidth >= 1600;
       const isUnzoomed = window.innerWidth <= 1200;
-      const itemHeight = isZoomed ? 66 : isUnzoomed ? 54 : 62;
+      const itemHeight = isUnzoomed ? 54 : 62;
 
       const getCount = (ref: React.RefObject<HTMLDivElement | null>) => {
         if (!ref.current) return 1;
@@ -302,51 +301,59 @@ const MainPage = () => {
                 - En Çok İzin Kullanan Çalışanlar -
               </h2>
             </div>
-            <div
-              ref={topLeaveUsersRef}
-              className="space-y-2 flex-1 min-h-0 overflow-y-auto no-scrollbar"
-            >
-              {topLeaveUsers.slice(0, topLeaveUsersCount).map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <img
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
-                      alt={user.employeeName}
-                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-md font-semibold text-gray-800 truncate">
-                        {user.employeeName}
-                      </p>
-                      <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
-                        <div
-                          className="h-1.5 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(
-                              (user.totalLeaves / user.totalAllowed) * 100,
-                              100,
-                            )}%`,
-                            backgroundColor:
-                              user.totalLeaves / user.totalAllowed >= 0.75
-                                ? "#f43f5e"
-                                : user.totalLeaves / user.totalAllowed >= 0.5
-                                  ? "#f59e0b"
-                                  : "#10b981",
-                          }}
-                        ></div>
+            <div className="flex-1 min-h-0 relative">
+              <div
+                ref={topLeaveUsersRef}
+                className="space-y-2 h-full overflow-y-auto no-scrollbar"
+              >
+                {topLeaveUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <img
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
+                        alt={user.employeeName}
+                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-md font-semibold text-gray-800 truncate">
+                          {user.employeeName}
+                        </p>
+                        <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
+                          <div
+                            className="h-1.5 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(
+                                (user.totalLeaves / user.totalAllowed) * 100,
+                                100,
+                              )}%`,
+                              backgroundColor:
+                                user.totalLeaves / user.totalAllowed >= 0.75
+                                  ? "#f43f5e"
+                                  : user.totalLeaves / user.totalAllowed >= 0.5
+                                    ? "#f59e0b"
+                                    : "#10b981",
+                            }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex flex-col items-end ml-2 shrink-0">
+                      <span className="inline-block bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
+                        {user.totalLeaves} / {user.totalAllowed} gün
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end ml-2 shrink-0">
-                    <span className="inline-block bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
-                      {user.totalLeaves} / {user.totalAllowed} gün
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              {allTopLeaveUsers.length <= topLeaveUsersCount &&
+                allTopLeaveUsers.length > 0 && (
+                  <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
+                    - Daha fazla kayıt yok -
+                  </p>
+                )}
             </div>
           </div>
         </div>
@@ -359,43 +366,51 @@ const MainPage = () => {
                 Onay Bekleyen İzinler
               </h2>
             </div>
-            <div
-              ref={pendingRef}
-              className="space-y-2 flex-1 min-h-0  overflow-y-auto no-scrollbar"
-            >
-              {pendingLeaves.slice(0, pendingCount).map((leave) => (
-                <div
-                  key={leave.leaveId}
-                  className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <img
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${leave.firstName}%${leave.lastName}`}
-                      alt={leave.employeeName}
-                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-md font-semibold truncate text-gray-800">
-                        {leave.employeeName}
-                      </p>
-                      <p className="text-xs truncate text-gray-500">
-                        {leave.reason} •{" "}
-                        {DateTime.fromISO(leave.startDate)
-                          .setLocale("tr")
-                          .toLocaleString(DateTime.DATE_MED)}
-                      </p>
+            <div className="flex-1 min-h-0 relative">
+              <div
+                ref={pendingRef}
+                className="space-y-2 h-full overflow-y-auto no-scrollbar"
+              >
+                {pendingLeaves.map((leave) => (
+                  <div
+                    key={leave.leaveId}
+                    className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <img
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${leave.firstName}%${leave.lastName}`}
+                        alt={leave.employeeName}
+                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-md font-semibold truncate text-gray-800">
+                          {leave.employeeName}
+                        </p>
+                        <p className="text-xs truncate text-gray-500">
+                          {leave.reason} •{" "}
+                          {DateTime.fromISO(leave.startDate)
+                            .setLocale("tr")
+                            .toLocaleString(DateTime.DATE_MED)}
+                        </p>
+                      </div>
                     </div>
+                    <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
+                      {leave.days} gün
+                    </span>
                   </div>
-                  <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
-                    {leave.days} gün
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+              {allPendingLeaves.length <= pendingCount &&
+                allPendingLeaves.length > 0 && (
+                  <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
+                    - Daha fazla kayıt yok -
+                  </p>
+                )}
             </div>
 
             <ViewAllButton
               label="İzin yönetim"
-              path="/leaves"
+              path="/management"
               buttonText="İzinleri Yönet"
             />
           </div>
@@ -407,36 +422,44 @@ const MainPage = () => {
               </h2>
             </div>
 
-            <div
-              ref={todayLeaveRef}
-              className="space-y-2 flex-1 min-h-0 overflow-y-auto no-scrollbar"
-            >
-              {todayLeaves.slice(0, todayLeaveCount).map((leave, index) => (
-                <div
-                  key={`${leave.leaveId}-${index}`}
-                  className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <img
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${leave.firstName}%${leave.lastName}`}
-                      alt={leave.employeeName}
-                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-md font-semibold text-gray-800 truncate">
-                        {leave.employeeName}
-                      </p>
-                      <p className="text-xs truncate text-gray-500">
-                        {leave.reason} • {leave.startDateFormatted} -{" "}
-                        {leave.endDateFormatted}
-                      </p>
+            <div className="flex-1 min-h-0 relative">
+              <div
+                ref={todayLeaveRef}
+                className="space-y-2 h-full overflow-y-auto no-scrollbar"
+              >
+                {todayLeaves.map((leave, index) => (
+                  <div
+                    key={`${leave.leaveId}-${index}`}
+                    className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <img
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${leave.firstName}%${leave.lastName}`}
+                        alt={leave.employeeName}
+                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-md font-semibold text-gray-800 truncate">
+                          {leave.employeeName}
+                        </p>
+                        <p className="text-xs truncate text-gray-500">
+                          {leave.reason} • {leave.startDateFormatted} -{" "}
+                          {leave.endDateFormatted}
+                        </p>
+                      </div>
                     </div>
+                    <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
+                      {leave.remainingDays} gün
+                    </span>
                   </div>
-                  <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
-                    {leave.remainingDays} gün
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+              {allTodayLeaves.length <= todayLeaveCount &&
+                allTodayLeaves.length > 0 && (
+                  <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
+                    - Daha fazla kayıt yok -
+                  </p>
+                )}
             </div>
 
             <ViewAllButton
@@ -455,30 +478,38 @@ const MainPage = () => {
               </h2>
             </div>
 
-            <div
-              ref={holidaysRef}
-              className="space-y-2 flex-1 min-h-0 overflow-y-auto no-scrollbar"
-            >
-              {upcomingHolidays.slice(0, holidayCount).map((tatil, index) => (
-                <div
-                  key={index}
-                  className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-md font-semibold text-gray-800 truncate">
-                      {tatil.ad}
-                    </p>
-                    <p className="text-xs truncate text-gray-500">
-                      {DateTime.fromISO(tatil.tarih)
-                        .setLocale("tr")
-                        .toLocaleString(DateTime.DATE_FULL)}
-                    </p>
+            <div className="flex-1 min-h-0 relative">
+              <div
+                ref={holidaysRef}
+                className="space-y-2 h-full overflow-y-auto no-scrollbar"
+              >
+                {upcomingHolidays.map((tatil, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-md font-semibold text-gray-800 truncate">
+                        {tatil.ad}
+                      </p>
+                      <p className="text-xs truncate text-gray-500">
+                        {DateTime.fromISO(tatil.tarih)
+                          .setLocale("tr")
+                          .toLocaleString(DateTime.DATE_FULL)}
+                      </p>
+                    </div>
+                    <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
+                      {tatil.gun_sayisi} gün
+                    </span>
                   </div>
-                  <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
-                    {tatil.gun_sayisi} gün
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+              {allUpcomingHolidays.length <= holidayCount &&
+                allUpcomingHolidays.length > 0 && (
+                  <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
+                    - Daha fazla kayıt yok -
+                  </p>
+                )}
             </div>
             <ViewAllButton
               label="Takvim"
@@ -494,37 +525,45 @@ const MainPage = () => {
               </h2>
             </div>
 
-            <div
-              ref={leavesRef}
-              className="space-y-2 flex-1 min-h-0 overflow-y-auto no-scrollbar"
-            >
-              {upcomingLeaves.slice(0, leaveCount).map((leave, index) => (
-                <div
-                  key={index}
-                  className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <img
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${leave.firstName}%${leave.lastName}`}
-                      alt={leave.employeeName}
-                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-md font-semibold text-gray-800 truncate">
-                        {leave.employeeName}
-                      </p>
-                      <p className="text-xs truncate text-gray-500">
-                        {DateTime.fromISO(leave.startDate)
-                          .setLocale("tr")
-                          .toLocaleString(DateTime.DATE_FULL)}
-                      </p>
+            <div className="flex-1 min-h-0 relative">
+              <div
+                ref={leavesRef}
+                className="space-y-2 h-full overflow-y-auto no-scrollbar"
+              >
+                {upcomingLeaves.map((leave, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <img
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${leave.firstName}%${leave.lastName}`}
+                        alt={leave.employeeName}
+                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-md font-semibold text-gray-800 truncate">
+                          {leave.employeeName}
+                        </p>
+                        <p className="text-xs truncate text-gray-500">
+                          {DateTime.fromISO(leave.startDate)
+                            .setLocale("tr")
+                            .toLocaleString(DateTime.DATE_FULL)}
+                        </p>
+                      </div>
                     </div>
+                    <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
+                      {leave.days} gün
+                    </span>
                   </div>
-                  <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-2">
-                    {leave.days} gün
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+              {allUpcomingLeaves.length <= leaveCount &&
+                allUpcomingLeaves.length > 0 && (
+                  <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
+                    - Daha fazla kayıt yok -
+                  </p>
+                )}
             </div>
           </div>
         </div>

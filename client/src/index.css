@@ -7,11 +7,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (min-width: 1600px) {
-  body {
-    zoom: 110%;
-  }
-}
 @media (max-width: 1200px) {
   body {
     zoom: 90%;

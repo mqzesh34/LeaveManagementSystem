@@ -50,3 +50,7 @@ exports.getAllUsers = async () => {
 exports.getUserById = async (id) => {
   return await User.findById(id);
 };
+
+exports.getUserByEmail = async (email) => {
+  return await User.findOne({ email });
+};

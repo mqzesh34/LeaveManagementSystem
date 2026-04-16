@@ -23,7 +23,7 @@ export const useNavigation = () => {
         },
       });
       navigate(path);
-    }, 1500);
+    }, 500);
   };
 
   return { forwardTo };
