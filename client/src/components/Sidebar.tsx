@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
-import { Home, LogOut, Calendar1, SlidersHorizontal } from "lucide-react";
+import { Home, LogOut, Calendar1, SlidersHorizontal, History } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
 import { useNavigation } from "../hooks/useNavigation";
 import { authApi } from "../services/api";
@@ -39,7 +39,8 @@ const Sidebar = () => {
   const menuItems = [
     { name: "AnaSayfa", href: "/main", icon: Home },
     { name: "Takvim", href: "/calendar", icon: Calendar1 },
-    { name: "İzin Yönetim", href: "/management", icon: SlidersHorizontal },
+    { name: "İzin İstekleri", href: "/management", icon: SlidersHorizontal },
+    { name: "İstek Geçmişi", href: "/history-leaves", icon: History },
 
   ];
 

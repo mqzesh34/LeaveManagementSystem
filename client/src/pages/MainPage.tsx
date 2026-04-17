@@ -351,6 +351,7 @@ const MainPage = () => {
             <DashboardList
               allItems={allTopLeaveUsers}
               loading={loading}
+              emptyText="Henüz onaylanan izin bulunmuyor."
               renderItem={(user: any) => (
                 <EmployeeListItem
                   key={user.userId}
@@ -364,8 +365,8 @@ const MainPage = () => {
                       <div
                         className={`h-1.5 rounded-full transition-all duration-500 ${
                           getLeaveColor(user.totalLeaves / user.totalAllowed)
-                            .bar
-                        }`}
+                          .bar
+                          }`}
                         style={{
                           width: `${Math.min(
                             (user.totalLeaves / user.totalAllowed) * 100,
@@ -392,6 +393,7 @@ const MainPage = () => {
             <DashboardList
               allItems={allPendingLeaves}
               loading={loading}
+              emptyText="Bekleyen izin talebi bulunmuyor."
               renderItem={(leave: any) => (
                 <EmployeeListItem
                   key={leave.leaveId}
@@ -412,13 +414,12 @@ const MainPage = () => {
           <DashboardCard
             title="Bugün İzinde Olanlar"
             icon={<Palmtree className="w-7 h-7 text-fuchsia-700" />}
-            viewAllPath={`/calendar?date=${today}&view=timeGridDay`}
-            buttonText="Bugünü Takvimde Aç"
             className="flex-1"
           >
             <DashboardList
               allItems={allTodayLeaves}
               loading={loading}
+              emptyText="Bugün izinde olan çalışan yok."
               renderItem={(leave: any, index: number) => (
                 <EmployeeListItem
                   key={`${leave.leaveId}-${index}`}
@@ -473,6 +474,7 @@ const MainPage = () => {
             <DashboardList
               allItems={allUpcomingLeaves}
               loading={loading}
+              emptyText="Yaklaşan onaylı izin bulunmuyor."
               renderItem={(leave: any, index: number) => (
                 <EmployeeListItem
                   key={index}
@@ -521,7 +523,7 @@ const MainPage = () => {
                       >
                         {" "}
                         {selectedUser.totalLeaves - selectedUser.totalAllowed <=
-                        0
+                          0
                           ? `${selectedUser.totalAllowed - selectedUser.totalLeaves} Gün İzin Hakkı Kaldı`
                           : "Kullanacak İzin Hakkı Kalmadı"}
                       </span>

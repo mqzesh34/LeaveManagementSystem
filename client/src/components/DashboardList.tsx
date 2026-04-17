@@ -6,6 +6,7 @@ interface DashboardListProps<T> {
   itemHeightDefault?: number;
   itemHeightUnzoomed?: number;
   loading?: boolean;
+  emptyText?: string;
 }
 
 function DashboardList<T>({
@@ -14,6 +15,7 @@ function DashboardList<T>({
   itemHeightDefault = 62,
   itemHeightUnzoomed = 54,
   loading = false,
+  emptyText = "Kayıt bulunamadı.",
 }: DashboardListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(1);
@@ -48,9 +50,15 @@ function DashboardList<T>({
         ref={containerRef}
         className="space-y-2 h-full overflow-y-auto no-scrollbar"
       >
-        {visibleItems.map((item, index) => renderItem(item, index))}
+        {allItems.length === 0 ? (
+          <p className="text-sm text-gray-400 italic text-center mt-4">
+            {emptyText}
+          </p>
+        ) : (
+          visibleItems.map((item, index) => renderItem(item, index))
+        )}
       </div>
-      {allItems.length <= visibleCount && allItems.length > 0 && (
+      {allItems.length > 0 && allItems.length <= visibleCount && (
         <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
           - Daha fazla kayıt yok -
         </p>

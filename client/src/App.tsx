@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import { useAuth } from "./context/authContext.tsx";
 import ManagementPage from "./pages/ManagementPage.tsx";
 import Sidebar from "./components/Sidebar.tsx";
+import HistoryLeavesPage from "./pages/HistoryLeavesPage.tsx";
 
 function App() {
   const { user } = useAuth();
@@ -24,6 +25,8 @@ function App() {
             <Route path="/main" element={<MainPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/management" element={<ManagementPage />} />
+            <Route path="/history-leaves" element={<HistoryLeavesPage />} />
+
           </Route>
         </Routes>
       </Router>
