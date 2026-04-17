@@ -1,4 +1,3 @@
-import Sidebar from "../components/Sidebar";
 import {
   BadgeInfo,
   ClockArrowUp,
@@ -62,7 +61,7 @@ const MainPage = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
-  const today = new Date().toISOString().split("T")[0];
+  const today = now.toISODate();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -272,7 +271,6 @@ const MainPage = () => {
 
   return (
     <>
-      <Sidebar />
       <div className="no-scrollbar cursor-default absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
         <DashboardCard
           title="İstatistikler"

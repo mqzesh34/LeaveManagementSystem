@@ -5,7 +5,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import trLocale from "@fullcalendar/core/locales/tr";
 import { useLocation } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import tatiller from "../data/tatiller.json";
 
 import { api } from "../services/api";
@@ -108,7 +107,6 @@ const CalendarPage = () => {
 
   return (
     <div>
-      <Sidebar />
       <div className="no-scrollbar absolute top-20 bottom-20 left-72 right-8 p-6 rounded-xl border border-gray-100 shadow-sm">
         <FullCalendar
           ref={calendarRef}

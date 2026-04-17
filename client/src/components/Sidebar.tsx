@@ -1,8 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
-import { Home, LogOut, Calendar1, Users } from "lucide-react";
+import { Home, LogOut, Calendar1, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
 import { useNavigation } from "../hooks/useNavigation";
 import { authApi } from "../services/api";
@@ -12,6 +12,7 @@ const Sidebar = () => {
   const [currentDate, setCurrentDate] = useState("");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { forwardTo } = useNavigation();
   const handleLogout = async () => {
     await authApi.logout();
@@ -38,6 +39,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: "AnaSayfa", href: "/main", icon: Home },
     { name: "Takvim", href: "/calendar", icon: Calendar1 },
+    { name: "İzin Yönetim", href: "/management", icon: SlidersHorizontal },
 
   ];
 
@@ -75,8 +77,7 @@ const Sidebar = () => {
                 <button
                   key={item.name}
                   onClick={() => navigate(item.href)}
-                  className={`flex items-center w-full px-4 py-3 rounded-lg duration-400 ${
-                    location.pathname === item.href
+                  className={`flex items-center w-full px-4 py-3 rounded-lg duration-400 ${location.pathname === item.href
                     ? "bg-gray-200 text-gray-800 border-2 border-gray-800"
                     : "text-gray-700 hover:bg-gray-100 border-gray-100 border-2"
                     }`}
