@@ -7,6 +7,7 @@ interface DashboardListProps<T> {
   itemHeightUnzoomed?: number;
   loading?: boolean;
   emptyText?: string;
+  disableLimit?: boolean;
 }
 
 function DashboardList<T>({
@@ -16,6 +17,7 @@ function DashboardList<T>({
   itemHeightUnzoomed = 54,
   loading = false,
   emptyText = "Kayıt bulunamadı.",
+  disableLimit = false,
 }: DashboardListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(1);
@@ -42,7 +44,7 @@ function DashboardList<T>({
     return () => observer.disconnect();
   }, [itemHeightDefault, itemHeightUnzoomed, loading]);
 
-  const visibleItems = allItems.slice(0, visibleCount);
+  const visibleItems = disableLimit ? allItems : allItems.slice(0, visibleCount);
 
   return (
     <div className="flex-1 min-h-0 relative">
@@ -58,8 +60,8 @@ function DashboardList<T>({
           visibleItems.map((item, index) => renderItem(item, index))
         )}
       </div>
-      {allItems.length > 0 && allItems.length <= visibleCount && (
-        <p className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
+      {!disableLimit && allItems.length > 0 && allItems.length <= visibleCount && (
+        <p className="absolute  left-0 right-0 text-center text-xs text-gray-400 italic pointer-events-none">
           - Daha fazla kayıt yok -
         </p>
       )}

@@ -9,6 +9,15 @@ exports.getMyLeaves = async (req, res) => {
   }
 };
 
+exports.getTeamView = async (req, res) => {
+  try {
+    const data = await leaveService.getTeamView();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.getStats = async (req, res) => {
   try {
     const all = await leaveService.getAllLeaves();

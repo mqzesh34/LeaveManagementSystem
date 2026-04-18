@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    role: { type: String, default: "çalışan" },
+    role: { type: String, default: "employee" },
+    department: { type: String, default: "IT" },
   },
   { timestamps: true },
 );

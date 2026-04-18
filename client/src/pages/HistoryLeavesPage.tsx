@@ -13,7 +13,7 @@ const HistoryLeavesPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await api.get("/leaves/dashboard-stats");
+                const result = await api.get("/leaves/admin-view");
                 if (result.success) {
                     setAllData(result.data);
                 }
@@ -83,6 +83,7 @@ const HistoryLeavesPage = () => {
                     <DashboardList
                         allItems={approvedLeaves}
                         loading={loading}
+                        disableLimit={true}
                         emptyText="Geçmişte onaylanan izin kaydı bulunamadı."
                         renderItem={(leave: any) => (
                             <EmployeeListItem
@@ -109,6 +110,7 @@ const HistoryLeavesPage = () => {
                     <DashboardList
                         allItems={rejectedLeaves}
                         loading={loading}
+                        disableLimit={true}
                         emptyText="Geçmişte reddedilen izin kaydı bulunamadı."
                         renderItem={(leave: any) => (
                             <EmployeeListItem

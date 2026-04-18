@@ -6,6 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import trLocale from "@fullcalendar/core/locales/tr";
 import { useLocation } from "react-router-dom";
 import tatiller from "../data/tatiller.json";
+import { useAuth } from "../context/authContext";
 
 import { api } from "../services/api";
 
@@ -22,11 +23,14 @@ const CalendarPage = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const holidaysOnlyMode = params.get("mode") === "holidays";
+  const { user } = useAuth();
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   useEffect(() => {
-    api.get("/leaves/dashboard-stats")
+    const endpoint = isAdmin ? "/leaves/admin-view" : "/leaves/team-view";
+    api.get(endpoint)
       .then((result) => {
-        const data = result.data;
+        const data = result.data || [];
         const mappedEvents: any[] = [];
 
         tatiller.forEach((tatil) => {
@@ -71,7 +75,7 @@ const CalendarPage = () => {
 
         setEvents(mappedEvents);
       });
-  }, [holidaysOnlyMode]);
+  }, [holidaysOnlyMode, isAdmin]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

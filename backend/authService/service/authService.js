@@ -2,7 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-exports.registerUser = async (email, password, firstName, lastName, role) => {
+exports.registerUser = async (email, password, firstName, lastName, role, department) => {
   const userExists = await User.findOne({ email });
   if (userExists) throw new Error("Bu e-posta zaten kullanımda.");
 
@@ -15,6 +15,7 @@ exports.registerUser = async (email, password, firstName, lastName, role) => {
     firstName,
     lastName,
     role: role || "employee",
+    department: department || "",
   });
 };
 
@@ -39,6 +40,7 @@ exports.loginUser = async (email, password, isRememberMe) => {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      department: user.department,
     },
   };
 };

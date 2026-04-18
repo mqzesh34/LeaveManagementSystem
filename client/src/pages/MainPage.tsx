@@ -6,6 +6,8 @@ import {
   Palmtree,
   CalendarDays,
   History,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useEffect, useState, useMemo } from "react";
@@ -26,6 +28,7 @@ import DashboardList from "../components/DashboardList";
 import EmployeeListItem from "../components/EmployeeListItem";
 import Popup from "../components/Popup";
 import tatiller from "../data/tatiller.json";
+import { useAuth } from "../context/authContext";
 
 const getLeaveColor = (ratio: number) => {
   if (ratio >= 0.75) {
@@ -57,16 +60,23 @@ const getLeaveColor = (ratio: number) => {
 
 const MainPage = () => {
   const [allData, setAllData] = useState<any[]>([]);
+  const [myLeaves, setMyLeaves] = useState<any[]>([]);
+  const [teamView, setTeamView] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const { user } = useAuth();
 
+  const isAdmin = user?.role?.toLowerCase() === "admin";
   const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
-  const today = now.toISODate();
 
   useEffect(() => {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     const fetchDashboardData = async () => {
       try {
-        const result = await api.get("/leaves/dashboard-stats");
+        const result = await api.get("/leaves/admin-view");
         if (result.success) {
           setAllData(result.data);
         }
@@ -77,7 +87,37 @@ const MainPage = () => {
       }
     };
     fetchDashboardData();
+  }, [isAdmin]);
+
+  useEffect(() => {
+    const fetchTeamView = async () => {
+      try {
+        const result = await api.get("/leaves/team-view");
+        if (result.success) {
+          setTeamView(result.data);
+        }
+      } catch (error) {
+        console.error("Ekip verisi alınamadı:", error);
+      }
+    };
+    fetchTeamView();
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      const fetchMyLeaves = async () => {
+        try {
+          const result = await api.get("/leaves/my");
+          if (result.success) {
+            setMyLeaves(result.data);
+          }
+        } catch (error) {
+          console.error("Kişisel izin verisi alınamadı:", error);
+        }
+      };
+      fetchMyLeaves();
+    }
+  }, [isAdmin]);
 
   const { stats, chartData } = useMemo(() => {
     const leavesOnly = allData.filter((item: any) => item.leaveId);
@@ -148,9 +188,9 @@ const MainPage = () => {
   }, [allData]);
 
   const allTodayLeaves = useMemo(() => {
-    return allData
+    return teamView
       .filter((item: any) => {
-        if (item.status !== "approved" || !item.startDate) return false;
+        if (!item.startDate) return false;
         const start = DateTime.fromISO(item.startDate).startOf("day");
         const end = start.plus({ days: item.days - 1 }).endOf("day");
         return now.startOf("day") >= start && now.startOf("day") <= end;
@@ -162,7 +202,6 @@ const MainPage = () => {
           firstName: item.firstName,
           lastName: item.lastName,
           employeeName: `${item.firstName} ${item.lastName}`,
-          reason: item.reason,
           startDateFormatted: startDt.setLocale("tr").toFormat("dd LLL"),
           endDateFormatted: startDt
             .plus({ days: item.days - 1 })
@@ -173,7 +212,7 @@ const MainPage = () => {
             Math.floor(now.startOf("day").diff(startDt, "days").days),
         };
       });
-  }, [allData, now]);
+  }, [teamView, now]);
 
   const allUpcomingHolidays = useMemo(() => {
     return tatiller
@@ -186,13 +225,8 @@ const MainPage = () => {
   }, [now]);
 
   const allUpcomingLeaves = useMemo(() => {
-    return allData
-      .filter(
-        (item: any) =>
-          item.status === "approved" &&
-          item.leaveId &&
-          DateTime.fromISO(item.startDate) >= now,
-      )
+    return teamView
+      .filter((item: any) => DateTime.fromISO(item.startDate) >= now && String(item.userId) !== String(user?.id))
       .map((item: any) => ({
         leaveId: item.leaveId,
         firstName: item.firstName,
@@ -206,7 +240,44 @@ const MainPage = () => {
           DateTime.fromISO(a.startDate).toMillis() -
           DateTime.fromISO(b.startDate).toMillis(),
       );
-  }, [allData, now]);
+  }, [teamView, now]);
+
+  const myLeaveStats = useMemo(() => {
+    const totalAllowed = myLeaves[0]?.totalAllowed ?? 20;
+    const approved = myLeaves
+      .filter((l: any) => l.status === "approved")
+      .reduce((sum: number, l: any) => sum + (l.days ?? 0), 0);
+    const pending = myLeaves.filter((l: any) => l.status === "pending").length;
+    const ratio = approved / totalAllowed;
+
+    const upcomingMyLeaves = myLeaves
+      .filter(
+        (l: any) =>
+          l.status === "approved" && DateTime.fromISO(l.startDate) >= now,
+      )
+      .sort(
+        (a: any, b: any) =>
+          DateTime.fromISO(a.startDate).toMillis() -
+          DateTime.fromISO(b.startDate).toMillis(),
+      );
+
+    const myLeavesHistory = myLeaves
+      .filter((l: any) => DateTime.fromISO(l.startDate) < now)
+      .sort(
+        (a: any, b: any) =>
+          DateTime.fromISO(b.startDate).toMillis() -
+          DateTime.fromISO(a.startDate).toMillis(),
+      );
+
+    return {
+      totalAllowed,
+      approved,
+      pending,
+      ratio,
+      upcomingMyLeaves,
+      myLeavesHistory,
+    };
+  }, [myLeaves, now]);
 
   const selectedUserStats = useMemo(() => {
     if (!selectedUser) return null;
@@ -272,147 +343,260 @@ const MainPage = () => {
   return (
     <>
       <div className="no-scrollbar cursor-default absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
-        <DashboardCard
-          title="İstatistikler"
-          icon={
-            <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" />
-          }
-          className="w-[33%]"
-        >
-          <div className="flex flex-col w-full flex-1 min-h-0">
-            <div className="flex flex-row items-center w-full justify-between gap-4 shrink-0 min-w-0 h-47.5">
-              <div className="relative w-40 h-40 shrink-0 non-select select-none pointer-events-none focus:outline-none">
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                  className="non-select select-none"
-                >
-                  <PieChart
-                    className="non-select select-none focus:outline-none"
-                    style={{ outline: "none" }}
+        {isAdmin && (
+          <DashboardCard
+            title="İstatistikler"
+            icon={
+              <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" />
+            }
+            className="w-[33%]"
+          >
+            <div className="flex flex-col w-full flex-1 min-h-0">
+              <div className="flex flex-row items-center w-full justify-between gap-4 shrink-0 min-w-0 h-47.5">
+                <div className="relative w-40 h-40 shrink-0 non-select select-none pointer-events-none focus:outline-none">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    className="non-select select-none"
                   >
-                    <Pie
-                      data={chartData}
-                      innerRadius="80%"
-                      outerRadius="100%"
-                      cornerRadius={6}
-                      paddingAngle={4}
-                      dataKey="value"
+                    <PieChart
+                      className="non-select select-none focus:outline-none"
+                      style={{ outline: "none" }}
                     >
-                      {chartData.map((entry, index) => (
-                        <Cell key={index} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
-                  <span className="text-4xl font-bold text-gray-800">
-                    {stats.total}
-                  </span>
-                  <span className="text-[11px] text-gray-500 font-bold tracking-tight">
-                    Toplam İstek
-                  </span>
+                      <Pie
+                        data={chartData}
+                        innerRadius="80%"
+                        outerRadius="100%"
+                        cornerRadius={6}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={index} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
+                    <span className="text-4xl font-bold text-gray-800">
+                      {stats.total}
+                    </span>
+                    <span className="text-[11px] text-gray-500 font-bold tracking-tight">
+                      Toplam İstek
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-center gap-4 flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pl-2">
+                  {chartData.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between min-w-0"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span
+                          className="w-3.5 h-3.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.fill }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {item.name}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-1">
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center gap-4 flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pl-2">
-                {chartData.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between min-w-0"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0"
-                        style={{ backgroundColor: item.fill }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                          {item.name}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-1">
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
+              <div className="w-[50%] h-1 mx-auto my-6 rounded-full bg-gray-200 shrink-0"></div>
+
+              <div className="flex items-center justify-center gap-2 mb-3 shrink-0">
+                <h2 className="text-xl truncate font-bold text-gray-800">
+                  - En Çok İzin Kullanan Çalışanlar -
+                </h2>
               </div>
-            </div>
 
-            <div className="w-[50%] h-1 mx-auto my-6 rounded-full bg-gray-200 shrink-0"></div>
-
-            <div className="flex items-center justify-center gap-2 mb-3 shrink-0">
-              <h2 className="text-xl truncate font-bold text-gray-800">
-                - En Çok İzin Kullanan Çalışanlar -
-              </h2>
-            </div>
-
-            <DashboardList
-              allItems={allTopLeaveUsers}
-              loading={loading}
-              emptyText="Henüz onaylanan izin bulunmuyor."
-              renderItem={(user: any) => (
-                <EmployeeListItem
-                  key={user.userId}
-                  firstName={user.firstName}
-                  lastName={user.lastName}
-                  primaryText={user.employeeName}
-                  badgeContent={`${user.totalLeaves} / ${user.totalAllowed} gün`}
-                  onClick={() => setSelectedUser(user)}
-                  extraContent={
-                    <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
-                      <div
+              <DashboardList
+                allItems={allTopLeaveUsers}
+                loading={loading}
+                emptyText="Henüz onaylanan izin bulunmuyor."
+                renderItem={(user: any) => (
+                  <EmployeeListItem
+                    key={user.userId}
+                    firstName={user.firstName}
+                    lastName={user.lastName}
+                    primaryText={user.employeeName}
+                    badgeContent={`${user.totalLeaves} / ${user.totalAllowed} gün`}
+                    onClick={() => setSelectedUser(user)}
+                    extraContent={
+                      <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
+                        <div
                         className={`h-1.5 rounded-full transition-all duration-500 ${
                           getLeaveColor(user.totalLeaves / user.totalAllowed)
                           .bar
                           }`}
-                        style={{
+                          style={{
                           width: `${Math.min(
                             (user.totalLeaves / user.totalAllowed) * 100,
                             100,
                           )}%`,
-                        }}
-                      ></div>
-                    </div>
-                  }
+                          }}
+                        ></div>
+                      </div>
+                    }
+                  />
+                )}
+              />
+            </div>
+          </DashboardCard>
+        )}
+
+        {!isAdmin && user && (
+          <DashboardCard
+            title="Profil Bilgilerim"
+            icon={
+              <FileChartColumnIncreasing className="w-7 h-7 text-indigo-500" />
+            }
+            className="w-[33%] h-full"
+          >
+            <div className="flex flex-col w-full flex-1 min-h-0 gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 shrink-0">
+                <img
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
+                  alt="Profil"
+                  className="w-14 h-14 rounded-full object-cover border border-gray-200 shrink-0"
                 />
-              )}
-            />
-          </div>
-        </DashboardCard>
+                <div className="flex-1 min-w-0">
+                  <p className="text-lg font-bold text-gray-800 truncate">
+                    {`${user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)} ${user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)}`}
+                  </p>
+                  <p className="text-sm text-gray-500 truncate">
+                    {user.email ?? ""}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border-2 border-gray-200 shrink-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
+                  İzin Durumu
+                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">
+                    <span className="font-bold text-gray-800">
+                      {myLeaveStats.approved}
+                    </span>{" "}
+                    / {myLeaveStats.totalAllowed} gün kullanıldı
+                  </span>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${getLeaveColor(myLeaveStats.ratio).text
+                      } ${getLeaveColor(myLeaveStats.ratio).bg} ${getLeaveColor(myLeaveStats.ratio).border}`}
+                  >
+                    {myLeaveStats.totalAllowed - myLeaveStats.approved > 0
+                      ? `${myLeaveStats.totalAllowed - myLeaveStats.approved} gün kaldı`
+                      : "Hak kalmadı"}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-500 ${getLeaveColor(myLeaveStats.ratio).bar}`}
+                    style={{
+                      width: `${Math.min(myLeaveStats.ratio * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mb-1 shrink-0">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+                  İzin Geçmişim
+                </h2>
+              </div>
+              <DashboardList
+                allItems={myLeaveStats.myLeavesHistory}
+                loading={loading}
+                emptyText="Henüz kullanılan izin bulunmuyor."
+                disableLimit={true}
+                renderItem={(leave: any) => (
+                  <EmployeeListItem
+                    key={leave.id ?? leave.leaveId}
+                    primaryText={leave.reason ?? "İzin"}
+                    secondaryText={DateTime.fromISO(leave.startDate)
+                      .setLocale("tr")
+                      .toLocaleString(DateTime.DATE_MED)}
+                    badgeContent={`${leave.days} gün`}
+                    icon={
+                      leave.status === "pending" || leave.status === "rejected" ? (
+                        <XCircle className="w-8 h-8 text-rose-500" />
+                      ) : (
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                      )
+                    }
+                  />
+                )}
+              />
+            </div>
+          </DashboardCard>
+        )}
 
         <div className="w-[33%] gap-4 flex flex-col">
+          {isAdmin && (
+            <DashboardCard
+              title="Onay Bekleyen İzinler"
+              icon={<AlarmClockCheck className="w-7 h-7 text-rose-600" />}
+              viewAllPath="/management"
+              buttonText="İzinleri Yönet"
+              className="flex-1"
+            >
+              <DashboardList
+                allItems={allPendingLeaves}
+                loading={loading}
+                emptyText="Bekleyen izin talebi bulunmuyor."
+                renderItem={(leave: any) => (
+                  <EmployeeListItem
+                    key={leave.leaveId}
+                    firstName={leave.firstName}
+                    lastName={leave.lastName}
+                    primaryText={leave.employeeName}
+                    secondaryText={`${leave.reason} • ${DateTime.fromISO(
+                      leave.startDate,
+                    )
+                      .setLocale("tr")
+                      .toLocaleString(DateTime.DATE_MED)}`}
+                    badgeContent={`${leave.days} gün`}
+                  />
+                )}
+              />
+            </DashboardCard>
+          )}
+          {!isAdmin && (
+            <DashboardCard
+              title="Yaklaşan Onaylanmış İzinlerim"
+              icon={<ClockArrowUp className="w-7 h-7 text-indigo-500" />}
+              className="flex-1"
+            >
+              <DashboardList
+                allItems={myLeaveStats.upcomingMyLeaves}
+                loading={loading}
+                emptyText="Yaklaşan onaylı izin bulunmuyor."
+                renderItem={(leave: any) => (
+                  <EmployeeListItem
+                    key={leave.id ?? leave.leaveId}
+                    primaryText={leave.reason ?? "İzin"}
+                    secondaryText={DateTime.fromISO(leave.startDate)
+                      .setLocale("tr")
+                      .toLocaleString(DateTime.DATE_MED)}
+                    badgeContent={`${leave.days} gün`}
+                  />
+                )}
+              />
+            </DashboardCard>
+          )}
           <DashboardCard
-            title="Onay Bekleyen İzinler"
-            icon={<AlarmClockCheck className="w-7 h-7 text-rose-600" />}
-            viewAllPath="/management"
-            buttonText="İzinleri Yönet"
-            className="flex-1"
-          >
-            <DashboardList
-              allItems={allPendingLeaves}
-              loading={loading}
-              emptyText="Bekleyen izin talebi bulunmuyor."
-              renderItem={(leave: any) => (
-                <EmployeeListItem
-                  key={leave.leaveId}
-                  firstName={leave.firstName}
-                  lastName={leave.lastName}
-                  primaryText={leave.employeeName}
-                  secondaryText={`${leave.reason} • ${DateTime.fromISO(
-                    leave.startDate,
-                  )
-                    .setLocale("tr")
-                    .toLocaleString(DateTime.DATE_MED)}`}
-                  badgeContent={`${leave.days} gün`}
-                />
-              )}
-            />
-          </DashboardCard>
-
-          <DashboardCard
-            title="Bugün İzinde Olanlar"
+            title="Bugün İzinde Olan Çalışanlar"
             icon={<Palmtree className="w-7 h-7 text-fuchsia-700" />}
             className="flex-1"
           >

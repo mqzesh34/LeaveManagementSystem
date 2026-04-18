@@ -13,7 +13,7 @@ const ManagementPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await api.get("/leaves/dashboard-stats");
+                const result = await api.get("/leaves/admin-view");
                 if (result.success) {
                     setAllData(result.data);
                 }
@@ -87,6 +87,7 @@ const ManagementPage = () => {
                     <DashboardList
                         allItems={approvedLeaves}
                         loading={loading}
+                        disableLimit={true}
                         emptyText="Bu dönemde onaylanan izin talebi bulunmuyor."
                         renderItem={(leave: any) => (
                             <EmployeeListItem
@@ -113,6 +114,7 @@ const ManagementPage = () => {
                     <DashboardList
                         allItems={rejectedLeaves}
                         loading={loading}
+                        disableLimit={true}
                         emptyText="Bu dönemde reddedilen izin talebi bulunmuyor."
                         renderItem={(leave: any) => (
                             <EmployeeListItem
@@ -139,6 +141,7 @@ const ManagementPage = () => {
                     <DashboardList
                         allItems={pendingLeaves}
                         loading={loading}
+                        disableLimit={true}
                         emptyText="Onay bekleyen izin talebi bulunmuyor."
                         renderItem={(leave: any) => (
                             <EmployeeListItem

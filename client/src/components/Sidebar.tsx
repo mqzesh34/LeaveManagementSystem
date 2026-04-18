@@ -39,9 +39,12 @@ const Sidebar = () => {
   const menuItems = [
     { name: "AnaSayfa", href: "/main", icon: Home },
     { name: "Takvim", href: "/calendar", icon: Calendar1 },
-    { name: "İzin İstekleri", href: "/management", icon: SlidersHorizontal },
-    { name: "İstek Geçmişi", href: "/history-leaves", icon: History },
-
+    ...(user?.role?.toLowerCase() === "admin"
+      ? [
+          { name: "İzin İstekleri", href: "/management", icon: SlidersHorizontal },
+          { name: "İstek Geçmişi", href: "/history-leaves", icon: History },
+        ]
+      : []),
   ];
 
   return (
@@ -50,28 +53,30 @@ const Sidebar = () => {
         <div className="flex justify-center w-full">
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center gap-2">
-              {user && (
-                <>
-                  <img
-                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-bold text-xl text-gray-800 min-w-fit truncate">
-                      {`${capitalize(user.firstName)} ${capitalize(user.lastName)}`}
-                    </span>
-                    <span className="text-gray-800 text-sm truncate">
-                      {user.role || ""}
-                    </span>
-                  </div>
-                </>
-              )}
+        {user?.role?.toLowerCase() === "admin" && (
+          <>
+            <img
+              src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div className="flex flex-col">
+              <span className="font-bold text-xl text-gray-800 min-w-fit truncate">
+                {`${capitalize(user.firstName)} ${capitalize(user.lastName)}`}
+              </span>
+              <span className="text-gray-800 text-sm truncate">
+                {user.role.toLowerCase().charAt(0).toUpperCase() + user.role.slice(1) || ""}
+              </span>
+            </div>
+          </>
+        )}
             </div>
           </div>
         </div>
-        <>
+        {user?.role?.toLowerCase() === "admin" && (
           <div className="h-0.5 border rounded-full border-gray-100 my-4"></div>
+        )}
+        <>
           <nav className="flex flex-col space-y-2 w-full text-lg">
             <div className="flex flex-col space-y-3">
               {menuItems.map((item) => (

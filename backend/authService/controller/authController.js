@@ -2,7 +2,7 @@ const authService = require("../service/authService");
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, role } = req.body;
+    const { email, password, firstName, lastName, role, department } = req.body;
     if (!email || !password || !firstName || !lastName || !role) {
       return res.status(400).json({ message: "Tüm alanlar zorunludur" });
     }
@@ -12,6 +12,7 @@ exports.register = async (req, res) => {
       firstName,
       lastName,
       role,
+      department
     );
     res.status(201).json({ success: true, data: user });
   } catch (error) {
@@ -71,6 +72,7 @@ exports.verifyToken = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        department: user.department,
       },
     });
   } catch (error) {
