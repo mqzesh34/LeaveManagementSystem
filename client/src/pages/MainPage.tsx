@@ -778,6 +778,10 @@ const MainPage = () => {
                         fontSize={10}
                         tickLine={false}
                         axisLine={false}
+                        angle={-45}
+                        textAnchor="end"
+                        height={50}
+                        interval={0}
                       />
                     </BarChart>
                   </ResponsiveContainer>
