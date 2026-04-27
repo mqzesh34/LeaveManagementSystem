@@ -42,9 +42,9 @@ export const api = {
     method: "POST",
     body: JSON.stringify(data),
   }),
-  put: (endpoint: string, data: any) => request(`${API_BASE_URL}${endpoint}`, {
+  put: (endpoint: string, data?: any) => request(`${API_BASE_URL}${endpoint}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    ...(data !== undefined && { body: JSON.stringify(data) }),
   }),
   delete: (endpoint: string) => request(`${API_BASE_URL}${endpoint}`, {
     method: "DELETE",

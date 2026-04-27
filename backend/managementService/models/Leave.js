@@ -19,12 +19,17 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         defaultValue: "pending",
       },
+      createdAt: {
+        type: DataTypes.DATE,
+        field: "created_at",
+      },
     },
     {
       sequelize,
       modelName: "Leave",
       tableName: "leaves",
-      timestamps: false,
+      timestamps: true,
+      updatedAt: false,
     },
   );
   return Leave;

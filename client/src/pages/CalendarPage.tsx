@@ -5,7 +5,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import trLocale from "@fullcalendar/core/locales/tr";
 import { useLocation } from "react-router-dom";
-import tatiller from "../data/tatiller.json";
+import holidays from "../data/holidays.json";
 import { useAuth } from "../context/authContext";
 
 import { api } from "../services/api";
@@ -33,13 +33,13 @@ const CalendarPage = () => {
         const data = result.data || [];
         const mappedEvents: any[] = [];
 
-        tatiller.forEach((tatil) => {
-          const gunDongusu = Math.ceil(tatil.gun_sayisi);
+        holidays.forEach((holiday) => {
+          const gunDongusu = Math.ceil(holiday.days);
           for (let i = 0; i < gunDongusu; i++) {
-            const date = new Date(tatil.tarih);
+            const date = new Date(holiday.date);
             date.setDate(date.getDate() + i);
             mappedEvents.push({
-              title: tatil.ad,
+              title: holiday.name,
               start: date.toISOString().split("T")[0],
               allDay: true,
               backgroundColor: statusColor.holiday,

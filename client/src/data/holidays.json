@@ -1,0 +1,14 @@
+[
+  { "name": "Yılbaşı", "date": "2026-01-01", "days": 1 },
+  { "name": "Ramazan Bayramı Arifesi", "date": "2026-03-19", "days": 0.5 },
+  { "name": "Ramazan Bayramı", "date": "2026-03-20", "days": 3 },
+  { "name": "Ulusal Egemenlik ve Çocuk Bayramı", "date": "2026-04-23", "days": 1 },
+  { "name": "Emek ve Dayanışma Günü", "date": "2026-05-01", "days": 1 },
+  { "name": "Atatürk'ü Anma, Gençlik ve Spor Bayramı", "date": "2026-05-19", "days": 1 },
+  { "name": "Kurban Bayramı Arifesi", "date": "2026-05-26", "days": 0.5 },
+  { "name": "Kurban Bayramı", "date": "2026-05-27", "days": 4 },
+  { "name": "Demokrasi ve Milli Birlik Günü", "date": "2026-07-15", "days": 1 },
+  { "name": "Zafer Bayramı", "date": "2026-08-30", "days": 1 },
+  { "name": "Cumhuriyet Bayramı Arifesi", "date": "2026-10-28", "days": 0.5 },
+  { "name": "Cumhuriyet Bayramı", "date": "2026-10-29", "days": 1 }
+]

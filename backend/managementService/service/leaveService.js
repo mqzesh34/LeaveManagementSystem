@@ -13,10 +13,10 @@ exports.getTeamView = async () => {
     today.setHours(0, 0, 0, 0);
 
     const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 1);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const thirtyDaysAhead = new Date(today);
-    thirtyDaysAhead.setDate(thirtyDaysAhead.getDate() + 30);
+    thirtyDaysAhead.setDate(thirtyDaysAhead.getDate() + 90);
 
     const leaves = await Leave.findAll({
       where: {
@@ -38,12 +38,11 @@ exports.getTeamView = async () => {
           String(u.id) === String(leave.userId),
       );
       return {
-        userId: leave.userId,
+        ...leave.get({ plain: true }),
         firstName: user ? user.firstName : "Çalışan",
         lastName: user ? user.lastName : "",
         department: user ? user.department : "Bilinmiyor",
-        startDate: leave.startDate,
-        days: leave.days,
+        leaveId: leave.id,
       };
     });
   } catch (error) {
@@ -77,3 +76,23 @@ exports.getAllLeaves = async () => {
     return await Leave.findAll();
   }
 };
+
+exports.approveLeave = async (id) =>{
+  const leave = await Leave.findByPk(id)
+  if(!leave) throw new Error('İzin talebi bulunamadı.')
+  
+  leave.status = 'approved'
+  await leave.save()
+  
+  return leave
+}
+
+exports.rejectLeave = async (id) =>{
+  const leave = await Leave.findByPk(id)
+  if(!leave) throw new Error('İzin talebi bulunamadı.')
+  
+  leave.status = 'rejected'
+  await leave.save()
+  
+  return leave
+}

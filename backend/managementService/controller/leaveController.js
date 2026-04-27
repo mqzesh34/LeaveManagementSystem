@@ -26,3 +26,21 @@ exports.getStats = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.approveLeave = async (req,res) => {
+  try {
+    const approvedLeave = await leaveService.approveLeave(req.params.id);
+    res.json({ success: true, data: approvedLeave })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+exports.rejectLeave = async (req,res) =>{
+  try {
+    const rejectedLeave = await leaveService.rejectLeave(req.params.id)
+    res.json({ success: true, data: rejectedLeave })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}

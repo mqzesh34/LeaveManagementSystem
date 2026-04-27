@@ -27,7 +27,9 @@ import DashboardCard from "../components/DashboardCard";
 import DashboardList from "../components/DashboardList";
 import EmployeeListItem from "../components/EmployeeListItem";
 import Popup from "../components/Popup";
-import tatiller from "../data/tatiller.json";
+import LeaveDetailPopup from "../components/LeaveDetailPopup";
+import holidays from "../data/holidays.json";
+import { formatLeaveItem } from "../utils/leaveUtils";
 import { useAuth } from "../context/authContext";
 
 const getLeaveColor = (ratio: number) => {
@@ -63,7 +65,8 @@ const MainPage = () => {
   const [myLeaves, setMyLeaves] = useState<any[]>([]);
   const [teamView, setTeamView] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [topLeaversPopup, setTopLeaversPopup] = useState<any>(null);
+  const [selectedLeavePopup, setSelectedLeavePopup] = useState<any>(null);
   const { user } = useAuth();
 
   const isAdmin = user?.role?.toLowerCase() === "admin";
@@ -172,13 +175,9 @@ const MainPage = () => {
     return allData
       .filter((item: any) => item.status === "pending" && item.leaveId)
       .map((item: any) => ({
-        leaveId: item.leaveId,
-        firstName: item.firstName,
-        lastName: item.lastName,
-        employeeName: `${item.firstName} ${item.lastName}`,
-        reason: item.reason,
-        startDate: item.startDate,
-        days: item.days,
+        ...formatLeaveItem(item, now),
+        department: item.department,
+        totalAllowed: item.totalAllowed,
       }))
       .sort(
         (a: any, b: any) =>
@@ -195,46 +194,23 @@ const MainPage = () => {
         const end = start.plus({ days: item.days - 1 }).endOf("day");
         return now.startOf("day") >= start && now.startOf("day") <= end;
       })
-      .map((item: any) => {
-        const startDt = DateTime.fromISO(item.startDate).startOf("day");
-        return {
-          leaveId: item.leaveId,
-          firstName: item.firstName,
-          lastName: item.lastName,
-          employeeName: `${item.firstName} ${item.lastName}`,
-          startDateFormatted: startDt.setLocale("tr").toFormat("dd LLL"),
-          endDateFormatted: startDt
-            .plus({ days: item.days - 1 })
-            .setLocale("tr")
-            .toFormat("dd LLL"),
-          remainingDays:
-            item.days -
-            Math.floor(now.startOf("day").diff(startDt, "days").days),
-        };
-      });
+      .map((item: any) => formatLeaveItem(item, now));
   }, [teamView, now]);
 
   const allUpcomingHolidays = useMemo(() => {
-    return tatiller
-      .filter((tatil: any) => DateTime.fromISO(tatil.tarih) >= now)
+    return holidays
+      .filter((holiday: any) => DateTime.fromISO(holiday.date).startOf("day") >= now.startOf("day"))
       .sort(
         (a: any, b: any) =>
-          DateTime.fromISO(a.tarih).toMillis() -
-          DateTime.fromISO(b.tarih).toMillis(),
+          DateTime.fromISO(a.date).toMillis() -
+          DateTime.fromISO(b.date).toMillis(),
       );
   }, [now]);
 
   const allUpcomingLeaves = useMemo(() => {
     return teamView
-      .filter((item: any) => DateTime.fromISO(item.startDate) >= now && String(item.userId) !== String(user?.id))
-      .map((item: any) => ({
-        leaveId: item.leaveId,
-        firstName: item.firstName,
-        lastName: item.lastName,
-        employeeName: `${item.firstName} ${item.lastName}`,
-        startDate: item.startDate,
-        days: item.days,
-      }))
+      .filter((item: any) => DateTime.fromISO(item.startDate).startOf("day") > now.startOf("day") && String(item.userId) !== String(user?.id))
+      .map((item: any) => formatLeaveItem(item, now))
       .sort(
         (a: any, b: any) =>
           DateTime.fromISO(a.startDate).toMillis() -
@@ -253,8 +229,9 @@ const MainPage = () => {
     const upcomingMyLeaves = myLeaves
       .filter(
         (l: any) =>
-          l.status === "approved" && DateTime.fromISO(l.startDate) >= now,
+          l.status === "approved" && DateTime.fromISO(l.startDate).startOf("day") >= now.startOf("day"),
       )
+      .map((item: any) => formatLeaveItem(item, now))
       .sort(
         (a: any, b: any) =>
           DateTime.fromISO(a.startDate).toMillis() -
@@ -279,12 +256,12 @@ const MainPage = () => {
     };
   }, [myLeaves, now]);
 
-  const selectedUserStats = useMemo(() => {
-    if (!selectedUser) return null;
+  const topLeaversPopupStats = useMemo(() => {
+    if (!topLeaversPopup) return null;
 
     const userLeaves = allData.filter(
       (item: any) =>
-        item.userId === selectedUser.userId &&
+        item.userId === topLeaversPopup.userId &&
         item.status === "approved" &&
         item.leaveId,
     );
@@ -315,7 +292,7 @@ const MainPage = () => {
     });
 
     const chartData = Object.entries(monthlyData).map(([name, value]) => {
-      const ratio = value / (selectedUser.totalAllowed || 20);
+      const ratio = value / (topLeaversPopup.totalAllowed || 20);
       return {
         name,
         days: value,
@@ -331,7 +308,61 @@ const MainPage = () => {
       ),
       chartData,
     };
-  }, [selectedUser, allData]);
+  }, [topLeaversPopup, allData]);
+
+  const selectedLeaveStats = useMemo(() => {
+    if (!selectedLeavePopup) return null;
+
+    const userLeaves = allData.filter(
+      (item: any) =>
+        item.userId === selectedLeavePopup.userId && item.leaveId,
+    );
+
+    const totalUsed = userLeaves
+      .filter((l: any) => l.status === "approved")
+      .reduce((sum: number, l: any) => sum + (l.days ?? 0), 0);
+
+    const totalAllowed = selectedLeavePopup.totalAllowed || 20;
+    const remaining = Math.max(0, totalAllowed - totalUsed);
+    const pendingCount = userLeaves.filter((l: any) => l.status === "pending").length;
+    const approvedCount = userLeaves.filter((l: any) => l.status === "approved").length;
+    const rejectedCount = userLeaves.filter((l: any) => l.status === "rejected").length;
+
+    return {
+      totalUsed,
+      totalAllowed,
+      remaining,
+      pendingCount,
+      approvedCount,
+      rejectedCount,
+      ratio: totalUsed / totalAllowed,
+    };
+  }, [selectedLeavePopup, allData]);
+
+  const handleApproveLeave = async (id: number) => {
+    const result = await api.put(`/leaves/approve/${id}`);
+    if (result.success) {
+      setAllData(allData.map((item: any) =>
+        item.leaveId === id ? { ...item, status: "approved" } : item,
+      ));
+
+      const approvedLeave = allData.find((item: any) => item.leaveId === id);
+      if (approvedLeave) {
+        setTeamView([...teamView, { ...approvedLeave, status: "approved" }]);
+      }
+    }
+  };
+
+  const handleRejectLeave = async (id: number) => {
+    const result = await api.put(`/leaves/reject/${id}`);
+    if (result.success) {
+      setAllData(allData.map((item: any) =>
+        item.leaveId === id ? { ...item, status: "rejected" } : item,
+      ));
+      setTeamView(teamView.filter((item: any) => item.leaveId !== id));
+    }
+  };
+
 
   if (loading)
     return (
@@ -431,19 +462,18 @@ const MainPage = () => {
                     lastName={user.lastName}
                     primaryText={user.employeeName}
                     badgeContent={`${user.totalLeaves} / ${user.totalAllowed} gün`}
-                    onClick={() => setSelectedUser(user)}
+                    onClick={() => setTopLeaversPopup(user)}
                     extraContent={
                       <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
                         <div
-                        className={`h-1.5 rounded-full transition-all duration-500 ${
-                          getLeaveColor(user.totalLeaves / user.totalAllowed)
-                          .bar
-                          }`}
+                          className={`h-1.5 rounded-full transition-all duration-500 ${getLeaveColor(user.totalLeaves / user.totalAllowed)
+                            .bar
+                            }`}
                           style={{
-                          width: `${Math.min(
-                            (user.totalLeaves / user.totalAllowed) * 100,
-                            100,
-                          )}%`,
+                            width: `${Math.min(
+                              (user.totalLeaves / user.totalAllowed) * 100,
+                              100,
+                            )}%`,
                           }}
                         ></div>
                       </div>
@@ -561,12 +591,9 @@ const MainPage = () => {
                     firstName={leave.firstName}
                     lastName={leave.lastName}
                     primaryText={leave.employeeName}
-                    secondaryText={`${leave.reason} • ${DateTime.fromISO(
-                      leave.startDate,
-                    )
-                      .setLocale("tr")
-                      .toLocaleString(DateTime.DATE_MED)}`}
-                    badgeContent={`${leave.days} gün`}
+                    secondaryText={leave.formattedSecondaryText}
+                    badgeContent={leave.formattedBadgeContent}
+                    onClick={() => setSelectedLeavePopup(leave)}
                   />
                 )}
               />
@@ -586,10 +613,9 @@ const MainPage = () => {
                   <EmployeeListItem
                     key={leave.id ?? leave.leaveId}
                     primaryText={leave.reason ?? "İzin"}
-                    secondaryText={DateTime.fromISO(leave.startDate)
-                      .setLocale("tr")
-                      .toLocaleString(DateTime.DATE_MED)}
-                    badgeContent={`${leave.days} gün`}
+                    secondaryText={leave.formattedSecondaryText}
+                    badgeContent={leave.formattedBadgeContent}
+                    onClick={() => setSelectedLeavePopup(leave)}
                   />
                 )}
               />
@@ -610,8 +636,9 @@ const MainPage = () => {
                   firstName={leave.firstName}
                   lastName={leave.lastName}
                   primaryText={leave.employeeName}
-                  secondaryText={`${leave.reason} • ${leave.startDateFormatted} - ${leave.endDateFormatted}`}
-                  badgeContent={`${leave.remainingDays} gün`}
+                  secondaryText={leave.formattedSecondaryText}
+                  badgeContent={leave.remainingDaysBadge}
+                  onClick={() => setSelectedLeavePopup(leave)}
                 />
               )}
             />
@@ -630,14 +657,14 @@ const MainPage = () => {
               <div className="space-y-2 h-full overflow-y-auto no-scrollbar">
                 {allUpcomingHolidays
                   .slice(0, 3)
-                  .map((tatil: any, index: number) => (
+                  .map((holiday: any, index: number) => (
                     <EmployeeListItem
                       key={index}
-                      primaryText={tatil.ad}
-                      secondaryText={DateTime.fromISO(tatil.tarih)
+                      primaryText={holiday.name}
+                      secondaryText={DateTime.fromISO(holiday.date)
                         .setLocale("tr")
                         .toLocaleString(DateTime.DATE_FULL)}
-                      badgeContent={`${tatil.gun_sayisi} gün`}
+                      badgeContent={`${holiday.days} gün`}
                     />
                   ))}
               </div>
@@ -661,14 +688,13 @@ const MainPage = () => {
               emptyText="Yaklaşan onaylı izin bulunmuyor."
               renderItem={(leave: any, index: number) => (
                 <EmployeeListItem
-                  key={index}
+                  key={`${leave.leaveId || index}`}
                   firstName={leave.firstName}
                   lastName={leave.lastName}
                   primaryText={leave.employeeName}
-                  secondaryText={DateTime.fromISO(leave.startDate)
-                    .setLocale("tr")
-                    .toLocaleString(DateTime.DATE_FULL)}
-                  badgeContent={`${leave.days} gün`}
+                  secondaryText={leave.formattedSecondaryText}
+                  badgeContent={leave.formattedBadgeContent}
+                  onClick={() => setSelectedLeavePopup(leave)}
                 />
               )}
             />
@@ -677,38 +703,38 @@ const MainPage = () => {
       </div>
 
       <Popup
-        isOpen={!!selectedUser}
-        onClose={() => setSelectedUser(null)}
+        isOpen={!!topLeaversPopup}
+        onClose={() => setTopLeaversPopup(null)}
         title="Kullanıcı İzin Detayları"
       >
-        {selectedUser && selectedUserStats && (
+        {topLeaversPopup && topLeaversPopupStats && (
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4 border-gray-200 border-2 p-4 rounded-xl">
               <img
-                src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedUser.firstName}%${selectedUser.lastName}`}
-                alt={selectedUser.employeeName}
+                src={`https://api.dicebear.com/7.x/initials/svg?seed=${topLeaversPopup.firstName}%${topLeaversPopup.lastName}`}
+                alt={topLeaversPopup.employeeName}
                 className="w-16 h-16 rounded-full object-cover border border-gray-200 shrink-0"
               />
               <div>
                 <h3 className="text-xl font-bold text-gray-800">
-                  {selectedUser.employeeName}
+                  {topLeaversPopup.employeeName}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-sm font-semibold  bg-gray-200 border text-gray-800 px-2 py-0.5 rounded-full ">
-                    {selectedUser.totalLeaves} Gün İzin Kullanıldı
+                    {topLeaversPopup.totalLeaves} Gün İzin Kullanıldı
                   </span>
                   {(() => {
                     const status = getLeaveColor(
-                      selectedUser.totalLeaves / selectedUser.totalAllowed,
+                      topLeaversPopup.totalLeaves / topLeaversPopup.totalAllowed,
                     );
                     return (
                       <span
                         className={`text-sm font-semibold px-2 py-0.5 rounded-full border ${status.text} ${status.bg} ${status.border}`}
                       >
                         {" "}
-                        {selectedUser.totalLeaves - selectedUser.totalAllowed <=
+                        {topLeaversPopup.totalLeaves - topLeaversPopup.totalAllowed <=
                           0
-                          ? `${selectedUser.totalAllowed - selectedUser.totalLeaves} Gün İzin Hakkı Kaldı`
+                          ? `${topLeaversPopup.totalAllowed - topLeaversPopup.totalLeaves} Gün İzin Hakkı Kaldı`
                           : "Kullanacak İzin Hakkı Kalmadı"}
                       </span>
                     );
@@ -727,7 +753,7 @@ const MainPage = () => {
                 </div>
                 <div className="h-48 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={selectedUserStats.chartData}>
+                    <BarChart data={topLeaversPopupStats.chartData}>
                       <Tooltip
                         cursor={{ fill: "#f3f4f6" }}
                         contentStyle={{
@@ -741,7 +767,7 @@ const MainPage = () => {
                         radius={[4, 4, 0, 0]}
                         name="İzin Günü"
                       >
-                        {selectedUserStats.chartData.map(
+                        {topLeaversPopupStats.chartData.map(
                           (entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ),
@@ -766,8 +792,8 @@ const MainPage = () => {
                   </span>
                 </div>
                 <div className="flex-1 overflow-y-auto max-h-48 no-scrollbar space-y-2">
-                  {selectedUserStats.history.length > 0 ? (
-                    selectedUserStats.history.map((leave: any, i: number) => (
+                  {topLeaversPopupStats.history.length > 0 ? (
+                    topLeaversPopupStats.history.map((leave: any, i: number) => (
                       <EmployeeListItem
                         key={i}
                         primaryText={leave.reason}
@@ -788,6 +814,17 @@ const MainPage = () => {
           </div>
         )}
       </Popup>
+
+      <LeaveDetailPopup
+        isOpen={!!selectedLeavePopup}
+        onClose={() => setSelectedLeavePopup(null)}
+        title={selectedLeavePopup?.status === "pending" ? "İzin Talebi Detayları" : "İzin Detayları"}
+        leaveData={selectedLeavePopup}
+        stats={selectedLeaveStats}
+        showActions={selectedLeavePopup?.status === "pending"}
+        onApprove={handleApproveLeave}
+        onReject={handleRejectLeave}
+      />
     </>
   );
 };
