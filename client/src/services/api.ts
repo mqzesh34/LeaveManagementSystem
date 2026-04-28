@@ -1,5 +1,9 @@
-const AUTH_BASE_URL = "http://localhost:5005/api/auth";
-const API_BASE_URL = "http://localhost:3000/api";
+const API_DOMAIN = import.meta.env.VITE_API_DOMAIN;
+const AUTH_PORT = import.meta.env.VITE_AUTH_SERVICE_PORT;
+const MANAGEMENT_PORT = import.meta.env.VITE_MANAGEMENT_SERVICE_PORT;
+
+const AUTH_BASE_URL = `${API_DOMAIN}:${AUTH_PORT}/api/auth`;
+const API_BASE_URL = `${API_DOMAIN}:${MANAGEMENT_PORT}/api`;
 
 interface RequestOptions extends RequestInit {
   token?: string | null;

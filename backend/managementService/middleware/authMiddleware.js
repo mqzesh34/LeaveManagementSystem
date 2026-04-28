@@ -5,8 +5,9 @@ const authMiddleware = async (req, res, next) => {
     return res.status(401).json({ success: false, message: "Token bulunamadı." });
   }
 
+  const authUrl = process.env.AUTH_SERVICE_URL;
   try {
-    const response = await fetch("http://localhost:5005/api/auth/verify", {
+    const response = await fetch(`${authUrl}/api/auth/verify`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

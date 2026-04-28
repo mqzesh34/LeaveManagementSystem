@@ -1,8 +1,8 @@
-require("dotenv").config();
+require("dotenv").config({ path: require('path').resolve(__dirname, '../../.env') });
 const app = require("./app");
 const connectDB = require("./config/db");
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.AUTH_PORT;
 
 connectDB().then(() => {
   app.listen(PORT, () => {

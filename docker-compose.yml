@@ -1,0 +1,74 @@
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - auth_service
+      - management_service
+
+  auth_service:
+    build:
+      context: ./backend/authService
+      dockerfile: Dockerfile
+    container_name: auth_service
+    ports:
+      - "1001:1001"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/authService:/app
+      - /app/node_modules
+
+  management_service:
+    build:
+      context: ./backend/managementService
+      dockerfile: Dockerfile
+    container_name: management_service
+    ports:
+      - "1002:1002"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/managementService:/app
+      - /app/node_modules
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+  postgres_data:

@@ -28,6 +28,11 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: "pending",
       },
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+        defaultValue: Sequelize.NOW
+      }
     });
   },
 

@@ -1,7 +1,7 @@
 const { Leave } = require("../models");
 const { Op } = require("sequelize");
 
-const AUTH_SERVICE_URL = "http://localhost:5005/api/auth/users";
+const AUTH_SERVICE_URL = `${process.env.AUTH_SERVICE_URL}/api/auth/users`;
 
 exports.getMyLeaves = async (userId) => {
   return await Leave.findAll({ where: { userId: userId } });
