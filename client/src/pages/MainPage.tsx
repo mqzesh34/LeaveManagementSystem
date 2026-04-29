@@ -198,6 +198,7 @@ const MainPage = () => {
       .filter((l: any) => l.status === "approved")
       .reduce((sum: number, l: any) => sum + (l.days ?? 0), 0);
     const pending = myLeaves.filter((l: any) => l.status === "pending").length;
+    const rejectedCount = myLeaves.filter((l: any) => l.status === "rejected").length;
     const ratio = approved / totalAllowed;
 
     const upcomingMyLeaves = myLeaves
@@ -213,7 +214,10 @@ const MainPage = () => {
       );
 
     const myLeavesHistory = myLeaves
-      .filter((l: any) => DateTime.fromISO(l.startDate) < now)
+      .filter((l: any) => {
+        if (l.status === "approved" && DateTime.fromISO(l.startDate).startOf("day") >= now.startOf("day")) return false;
+        return true;
+      })
       .sort(
         (a: any, b: any) =>
           DateTime.fromISO(b.startDate).toMillis() -
@@ -225,6 +229,7 @@ const MainPage = () => {
       approved,
       pending,
       ratio,
+      rejectedCount,
       upcomingMyLeaves,
       myLeavesHistory,
     };
@@ -514,12 +519,15 @@ const MainPage = () => {
                       .toLocaleString(DateTime.DATE_MED)}
                     badgeContent={`${leave.days} gün`}
                     icon={
-                      leave.status === "pending" || leave.status === "rejected" ? (
+                      leave.status === "rejected" || (leave.status === "pending" && DateTime.fromISO(leave.startDate).startOf("day") < now.startOf("day")) ? (
                         <XCircle className="w-8 h-8 text-rose-500" />
+                      ) : leave.status === "pending" ? (
+                        <AlarmClockCheck className="w-8 h-8 text-amber-500" />
                       ) : (
                         <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                       )
                     }
+                    onClick={() => setSelectedLeavePopup(leave)}
                   />
                 )}
               />
@@ -593,7 +601,7 @@ const MainPage = () => {
                   primaryText={leave.employeeName}
                   secondaryText={leave.formattedSecondaryText}
                   badgeContent={leave.remainingDaysBadge}
-                  onClick={() => setSelectedLeavePopup(leave)}
+                  onClick={(isAdmin || String(leave.userId) === String(user?.id) || String((leave as any)._id) === String(user?.id)) ? () => setSelectedLeavePopup(leave) : undefined}
                 />
               )}
             />
@@ -649,7 +657,7 @@ const MainPage = () => {
                   primaryText={leave.employeeName}
                   secondaryText={leave.formattedSecondaryText}
                   badgeContent={leave.formattedBadgeContent}
-                  onClick={() => setSelectedLeavePopup(leave)}
+                  onClick={(isAdmin || String(leave.userId) === String(user?.id) || String((leave as any)._id) === String(user?.id)) ? () => setSelectedLeavePopup(leave) : undefined}
                 />
               )}
             />
@@ -778,9 +786,26 @@ const MainPage = () => {
         isOpen={!!selectedLeavePopup}
         onClose={() => setSelectedLeavePopup(null)}
         title={selectedLeavePopup?.status === "pending" ? "İzin Talebi Detayları" : "İzin Detayları"}
-        leaveData={selectedLeavePopup}
-        stats={selectedLeaveStats}
-        showActions={selectedLeavePopup?.status === "pending"}
+        leaveData={selectedLeavePopup ? {
+          ...selectedLeavePopup,
+          firstName: selectedLeavePopup.firstName || user?.firstName || "",
+          lastName: selectedLeavePopup.lastName || user?.lastName || "",
+          employeeName: selectedLeavePopup.employeeName || (user ? `${user.firstName} ${user.lastName}` : ""),
+          department: selectedLeavePopup.department || (user as any)?.department || "Bilinmiyor",
+          description: (isAdmin || selectedLeavePopup.userId === user?.id || (selectedLeavePopup as any)?._id === user?.id) 
+            ? (selectedLeavePopup.details || selectedLeavePopup.description || "") 
+            : null
+        } : null}
+        stats={(selectedLeavePopup?.userId === user?.id || (selectedLeavePopup as any)?._id === user?.id) ? {
+          totalUsed: myLeaveStats.approved,
+          totalAllowed: myLeaveStats.totalAllowed,
+          remaining: Math.max(0, myLeaveStats.totalAllowed - myLeaveStats.approved),
+          pendingCount: myLeaveStats.pending,
+          approvedCount: myLeaveStats.approved,
+          rejectedCount: myLeaveStats.rejectedCount,
+          ratio: myLeaveStats.ratio
+        } : selectedLeaveStats}
+        showActions={isAdmin && selectedLeavePopup?.status === "pending"}
         onApprove={handleApproveLeave}
         onReject={handleRejectLeave}
       />

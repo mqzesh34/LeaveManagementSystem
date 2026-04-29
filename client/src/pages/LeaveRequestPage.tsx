@@ -149,7 +149,27 @@ const LeaveRequestPage = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    toast.success("İzin talebiniz başarıyla alındı!");
+    
+    try {
+      const response = await api.post("/leaves/add", {
+        startDate,
+        days: leaveDays,
+        reason: leaveType,
+        details: reason
+      });
+      
+      if (response.success) {
+        toast.success("İzin talebiniz başarıyla alındı!");
+        setStartDate(null);
+        setEndDate(null);
+        setLeaveType("");
+        setReason("");
+      } else {
+        toast.error("İzin talebi oluşturulurken bir hata oluştu.");
+      }
+    } catch (error) {
+      toast.error("Sunucu ile iletişim kurulamadı.");
+    }
   };
 
   return (

@@ -4,6 +4,7 @@ const leaveController = require("../controller/leaveController");
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
+router.post("/add", authMiddleware, leaveController.createLeave);
 router.get("/my", authMiddleware, leaveController.getMyLeaves);
 router.get("/team-view", authMiddleware, leaveController.getTeamView);
 router.get("/admin-view", authMiddleware, adminMiddleware, leaveController.getStats);

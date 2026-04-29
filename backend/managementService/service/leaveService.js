@@ -7,7 +7,26 @@ exports.getMyLeaves = async (userId) => {
   return await Leave.findAll({ where: { userId: userId } });
 };
 
-exports.getTeamView = async () => {
+exports.createLeave = async (userId, data) => {
+  const { startDate, days, reason, details } = data;
+  
+  if (!startDate || !days || !reason) {
+    throw new Error('Eksik bilgi: Başlangıç tarihi, gün sayısı ve izin türü zorunludur.');
+  }
+
+  const newLeave = await Leave.create({
+    userId,
+    startDate,
+    days,
+    reason,
+    details,
+    status: 'pending',
+  });
+
+  return newLeave;
+};
+
+exports.getTeamView = async (currentUser) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -37,8 +56,18 @@ exports.getTeamView = async () => {
           String(u._id) === String(leave.userId) ||
           String(u.id) === String(leave.userId),
       );
+      
+      const isAdmin = currentUser?.role?.toLowerCase() === 'admin';
+      const isOwner = String(currentUser?.id) === String(leave.userId);
+      const plainLeave = leave.get({ plain: true });
+
+      if (!isAdmin && !isOwner) {
+        plainLeave.reason = "İzinli";
+        plainLeave.details = null;
+      }
+
       return {
-        ...leave.get({ plain: true }),
+        ...plainLeave,
         firstName: user ? user.firstName : "Çalışan",
         lastName: user ? user.lastName : "",
         department: user ? user.department : "Bilinmiyor",

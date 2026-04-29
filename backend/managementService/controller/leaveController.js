@@ -9,9 +9,20 @@ exports.getMyLeaves = async (req, res) => {
   }
 };
 
+exports.createLeave = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const leaveData = req.body;
+    const newLeave = await leaveService.createLeave(userId, leaveData);
+    res.json({ success: true, data: newLeave });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.getTeamView = async (req, res) => {
   try {
-    const data = await leaveService.getTeamView();
+    const data = await leaveService.getTeamView(req.user);
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

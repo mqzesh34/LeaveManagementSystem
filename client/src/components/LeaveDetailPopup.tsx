@@ -245,18 +245,22 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
               </div>
             </div>
 
-            <div className="h-px bg-gray-200"></div>
+            {leaveData.description !== null && (
+              <>
+                <div className="h-px bg-gray-200"></div>
 
-            <div className="flex flex-col gap-3 flex-1">
-              <div className="flex items-center gap-2 text-gray-500">
-                <span className="text-sm text-gray-500 font-medium">Açıklama</span>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 flex-1">
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {leaveData.description || "Açıklama belirtilmemiş."}
-                </p>
-              </div>
-            </div>
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="text-sm text-gray-500 font-medium">Açıklama</span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {leaveData.description || "Açıklama belirtilmemiş."}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
 
             {showActions && (
               <>

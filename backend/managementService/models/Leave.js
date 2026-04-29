@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       days: DataTypes.INTEGER,
       reason: DataTypes.STRING,
+      details: DataTypes.TEXT,
       status: {
         type: DataTypes.STRING,
         defaultValue: "pending",
