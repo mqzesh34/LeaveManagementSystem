@@ -28,37 +28,11 @@ import DashboardList from "../components/DashboardList";
 import EmployeeListItem from "../components/EmployeeListItem";
 import Popup from "../components/Popup";
 import LeaveDetailPopup from "../components/LeaveDetailPopup";
+import LeaveStatsOverview from "../components/LeaveStatsOverview";
 import holidays from "../data/holidays.json";
-import { formatLeaveItem } from "../utils/leaveUtils";
+import { formatLeaveItem, getLeaveColor } from "../utils/leaveUtils";
 import { useAuth } from "../context/authContext";
 
-const getLeaveColor = (ratio: number) => {
-  if (ratio >= 0.75) {
-    return {
-      hex: "#f43f5e",
-      text: "text-rose-600",
-      bg: "bg-rose-50",
-      border: "border-rose-600",
-      bar: "bg-rose-500",
-    };
-  }
-  if (ratio >= 0.5) {
-    return {
-      hex: "#f59e0b",
-      text: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-600",
-      bar: "bg-amber-500",
-    };
-  }
-  return {
-    hex: "#10b981",
-    text: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-600",
-    bar: "bg-emerald-500",
-  };
-};
 
 const MainPage = () => {
   const [allData, setAllData] = useState<any[]>([]);
@@ -511,33 +485,14 @@ const MainPage = () => {
               </div>
 
               <div className="p-4 rounded-xl border-2 border-gray-200 shrink-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-                  İzin Durumu
-                </p>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">
-                    <span className="font-bold text-gray-800">
-                      {myLeaveStats.approved}
-                    </span>{" "}
-                    / {myLeaveStats.totalAllowed} gün kullanıldı
-                  </span>
-                  <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${getLeaveColor(myLeaveStats.ratio).text
-                      } ${getLeaveColor(myLeaveStats.ratio).bg} ${getLeaveColor(myLeaveStats.ratio).border}`}
-                  >
-                    {myLeaveStats.totalAllowed - myLeaveStats.approved > 0
-                      ? `${myLeaveStats.totalAllowed - myLeaveStats.approved} gün kaldı`
-                      : "Hak kalmadı"}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all duration-500 ${getLeaveColor(myLeaveStats.ratio).bar}`}
-                    style={{
-                      width: `${Math.min(myLeaveStats.ratio * 100, 100)}%`,
-                    }}
-                  />
-                </div>
+                <LeaveStatsOverview 
+                  totalUsed={myLeaveStats.approved}
+                  totalAllowed={myLeaveStats.totalAllowed}
+                  approvedCount={0}
+                  pendingCount={myLeaveStats.pending}
+                  rejectedCount={0}
+                  showHistory={false}
+                />
               </div>
 
               <div className="flex items-center gap-2 mb-1 shrink-0">

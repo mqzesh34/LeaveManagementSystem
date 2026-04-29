@@ -1,13 +1,10 @@
 import {
-  CalendarDays,
-  History,
   CheckCircle2,
   XCircle,
   Calendar,
   Clock,
   FileText,
   MessageSquareText,
-  CalendarClock,
   ClockArrowUp,
   ArrowLeft,
 } from "lucide-react";
@@ -15,16 +12,7 @@ import { DateTime } from "luxon";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Popup from "./Popup";
-
-const getLeaveColor = (ratio: number) => {
-  if (ratio >= 0.75) {
-    return { hex: "#f43f5e", text: "text-rose-600", bg: "bg-rose-50", border: "border-rose-600", bar: "bg-rose-500" };
-  }
-  if (ratio >= 0.5) {
-    return { hex: "#f59e0b", text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-600", bar: "bg-amber-500" };
-  }
-  return { hex: "#10b981", text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-600", bar: "bg-emerald-500" };
-};
+import LeaveStatsOverview from "./LeaveStatsOverview";
 
 interface LeaveDetailPopupProps {
   isOpen: boolean;
@@ -207,62 +195,18 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
 
             <div className="h-px bg-gray-200"></div>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-gray-500">
-                <CalendarDays className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">İzin Özeti</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Toplam Hak</span>
-                <span className="text-sm font-bold text-gray-800">{stats.totalAllowed} gün</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Kullanılan</span>
-                <span className="text-sm font-bold text-gray-800">{stats.totalUsed} gün</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Kalan</span>
-                <span className="text-sm font-bold text-gray-800">{stats.remaining} gün</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
-                <div
-                  className="h-2 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(100, (stats.totalUsed / stats.totalAllowed) * 100)}%`,
-                    backgroundColor: getLeaveColor(stats.ratio).hex,
-                  }}
-                />
-              </div>
-            </div>
+            <LeaveStatsOverview
+              totalUsed={stats.totalUsed}
+              totalAllowed={stats.totalAllowed}
+              approvedCount={stats.approvedCount}
+              pendingCount={stats.pendingCount}
+              rejectedCount={stats.rejectedCount}
+            />
 
-            <div className="h-px bg-gray-200"></div>
-
-            <div>
-              <div className="flex items-center gap-2 text-gray-500 mb-3">
-                <History className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Talep Geçmişi</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="flex flex-col items-center bg-emerald-50 rounded-xl py-2">
-                  <span className="text-lg font-bold text-emerald-600">{stats.approvedCount}</span>
-                  <span className="text-[13px] text-emerald-600">Onaylanan</span>
-                </div>
-                <div className="flex flex-col items-center bg-amber-50 rounded-xl py-2">
-                  <span className="text-lg font-bold text-amber-600">{stats.pendingCount}</span>
-                  <span className="text-[13px] text-amber-600">Bekleyen</span>
-                </div>
-                <div className="flex flex-col items-center bg-rose-50 rounded-xl py-2">
-                  <span className="text-lg font-bold text-rose-600">{stats.rejectedCount}</span>
-                  <span className="text-[13px] text-rose-600">Reddedilen</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-gray-200"></div>
 
             <div className="flex items-center justify-between mt-auto">
               <div className="flex flex-col">
-                <span className="text-[11px] font-semibold text-gray-400 uppercase">Talep Tarihi</span>
+                <span className="text-sm text-gray-500 font-medium">Talep Tarihi</span>
                 <span className="text-sm font-bold text-gray-800">
                   {leaveData.createdAt
                     ? DateTime.fromISO(leaveData.createdAt).setLocale("tr").toLocaleString(DateTime.DATETIME_MED)
@@ -279,8 +223,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
           <div className="col-span-3 bg-white border-gray-200 border-2 rounded-2xl p-5 flex flex-col gap-5">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 text-gray-500">
-                <Calendar className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">İzin Bilgileri</span>
+                <span className="text-sm text-gray-500 font-medium">İzin Bilgileri</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -306,12 +249,11 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
 
             <div className="flex flex-col gap-3 flex-1">
               <div className="flex items-center gap-2 text-gray-500">
-                <MessageSquareText className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Açıklama</span>
+                <span className="text-sm text-gray-500 font-medium">Açıklama</span>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 flex-1">
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate.
+                  {leaveData.description || "Açıklama belirtilmemiş."}
                 </p>
               </div>
             </div>
@@ -319,12 +261,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
             {showActions && (
               <>
                 <div className="h-px bg-gray-200"></div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <button className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-600 border-2 border-gray-200 hover:border-amber-300 text-sm font-semibold transition-all duration-200 cursor-pointer">
-                    <CalendarClock className="w-4 h-4" />
-                    Farklı Gün Öner
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
                   <button className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border-2 border-rose-200 hover:border-rose-300 text-sm font-semibold transition-all duration-200 cursor-pointer" onClick={() => setConfirmAction({ type: "reject", id: leaveData.leaveId })}>
                     <XCircle className="w-4 h-4" />
                     Reddet
@@ -338,8 +275,9 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
             )}
           </div>
         </div>
-      )}
-    </Popup>
+      )
+      }
+    </Popup >
   );
 };
 
