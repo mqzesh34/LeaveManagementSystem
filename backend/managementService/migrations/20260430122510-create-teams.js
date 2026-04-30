@@ -14,7 +14,7 @@ module.exports = {
       },
       team_lead_id: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,

@@ -7,6 +7,7 @@ interface User {
   lastName: string;
   role: string;
   email: string;
+  teamId?: number | null;
 }
 
 interface AuthContextType {

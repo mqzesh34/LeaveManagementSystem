@@ -11,6 +11,7 @@ import ManagementPage from "./pages/ManagementPage.tsx";
 import Sidebar from "./components/Sidebar.tsx";
 import HistoryLeavesPage from "./pages/HistoryLeavesPage.tsx";
 import LeaveRequestPage from "./pages/LeaveRequestPage.tsx";
+import TeamManagementPage from "./pages/TeamManagementPage.tsx";
 import PageLoader from "./components/PageLoader.tsx";
 
 const AppContent = () => {
@@ -18,26 +19,32 @@ const AppContent = () => {
   const location = useLocation();
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [prevPath, setPrevPath] = useState(location.pathname);
+  const skipPageLoader = Boolean((location.state as any)?.skipPageLoader);
 
   if (location.pathname !== prevPath) {
     setPrevPath(location.pathname);
-    setIsPageLoading(true);
+    setIsPageLoading(!skipPageLoader);
   }
 
   useEffect(() => {
+    if (skipPageLoader) {
+      setIsPageLoading(false);
+      return;
+    }
+
     const timer = setTimeout(() => {
       setIsPageLoading(false);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [location.pathname]);
+  }, [location.pathname, skipPageLoader]);
 
   return (
     <>
-      <PageLoader isLoading={isPageLoading} />
+      <PageLoader isLoading={!skipPageLoader && isPageLoading} />
       {user && <Sidebar />}
 
-      <div className={`transition-opacity duration-500 ${isPageLoading ? "opacity-0" : "opacity-100"}`}>
+      <div className={`transition-opacity ${skipPageLoader ? "duration-0" : "duration-500"} ${isPageLoading ? "opacity-0" : "opacity-100"}`}>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/main" replace /> : <LoginPage />} />
 
@@ -45,6 +52,7 @@ const AppContent = () => {
             <Route path="/main" element={<MainPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/management" element={<ManagementPage />} />
+            <Route path="/teams" element={<TeamManagementPage />} />
             <Route path="/history-leaves" element={<HistoryLeavesPage />} />
             <Route path="/request-leave" element={<LeaveRequestPage />} />
           </Route>

@@ -1,13 +1,11 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 import { Mail, KeyRound } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
 import { useNavigation } from "../hooks/useNavigation";
 import { authApi } from "../services/api";
 
 const LoginPage = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRememberMe, setRemember] = useState(false);
@@ -100,15 +98,6 @@ const LoginPage = () => {
               <button className="p-3 rounded-lg bg-gray-800 text-white text-lg border-2 border-gray-900 hover:bg-gray-700 transition">
                 Giriş Yap
               </button>
-              <p className="text-center text-sm text-gray-600">
-                <button
-                  type="button"
-                  className="underline underline-offset-3 text-lg text-black"
-                  onClick={() => navigate("/register")}
-                >
-                  Şifremi Unuttum
-                </button>
-              </p>
             </form>
           </div>
         </div>

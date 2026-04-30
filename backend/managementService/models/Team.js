@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       teamLeadId: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         field: "team_lead_id",
       },
     },
@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "Team",
       tableName: "teams",
       timestamps: true,
+      createdAt: "created_at",
       updatedAt: false,
     }
   );

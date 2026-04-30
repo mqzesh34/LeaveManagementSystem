@@ -43,11 +43,12 @@ const MainPage = () => {
   const [selectedLeavePopup, setSelectedLeavePopup] = useState<any>(null);
   const { user } = useAuth();
 
-  const isAdmin = user?.role?.toLowerCase() === "admin";
+  const userRole = user?.role?.toLowerCase();
+  const canManageLeaves = userRole === "admin" || userRole === "team_lead";
   const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canManageLeaves) {
       setLoading(false);
       return;
     }
@@ -64,7 +65,7 @@ const MainPage = () => {
       }
     };
     fetchDashboardData();
-  }, [isAdmin]);
+  }, [canManageLeaves]);
 
   useEffect(() => {
     const fetchTeamView = async () => {
@@ -81,7 +82,7 @@ const MainPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canManageLeaves) {
       const fetchMyLeaves = async () => {
         try {
           const result = await api.get("/leaves/my");
@@ -94,7 +95,7 @@ const MainPage = () => {
       };
       fetchMyLeaves();
     }
-  }, [isAdmin]);
+  }, [canManageLeaves]);
 
   const { stats, chartData } = useMemo(() => {
     const leavesOnly = allData.filter((item: any) => item.leaveId);
@@ -150,7 +151,7 @@ const MainPage = () => {
       .filter((item: any) => item.status === "pending" && item.leaveId)
       .map((item: any) => ({
         ...formatLeaveItem(item, now),
-        department: item.department,
+        teamName: item.teamName,
         totalAllowed: item.totalAllowed,
       }))
       .sort(
@@ -190,7 +191,7 @@ const MainPage = () => {
           DateTime.fromISO(a.startDate).toMillis() -
           DateTime.fromISO(b.startDate).toMillis(),
       );
-  }, [teamView, now]);
+  }, [teamView, now, user]);
 
   const myLeaveStats = useMemo(() => {
     const totalAllowed = myLeaves[0]?.totalAllowed ?? 20;
@@ -353,7 +354,7 @@ const MainPage = () => {
   return (
     <>
       <div className="no-scrollbar cursor-default absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
-        {isAdmin && (
+        {canManageLeaves && (
           <DashboardCard
             title="İstatistikler"
             icon={
@@ -464,7 +465,7 @@ const MainPage = () => {
           </DashboardCard>
         )}
 
-        {!isAdmin && user && (
+        {!canManageLeaves && user && (
           <DashboardCard
             title="Profil Bilgilerim"
             icon={
@@ -536,7 +537,7 @@ const MainPage = () => {
         )}
 
         <div className="w-[33%] gap-4 flex flex-col">
-          {isAdmin && (
+          {canManageLeaves && (
             <DashboardCard
               title="Onay Bekleyen İzinler"
               icon={<AlarmClockCheck className="w-7 h-7 text-rose-600" />}
@@ -562,7 +563,7 @@ const MainPage = () => {
               />
             </DashboardCard>
           )}
-          {!isAdmin && (
+          {!canManageLeaves && (
             <DashboardCard
               title="Yaklaşan Onaylanmış İzinlerim"
               icon={<ClockArrowUp className="w-7 h-7 text-indigo-500" />}
@@ -601,7 +602,7 @@ const MainPage = () => {
                   primaryText={leave.employeeName}
                   secondaryText={leave.formattedSecondaryText}
                   badgeContent={leave.remainingDaysBadge}
-                  onClick={(isAdmin || String(leave.userId) === String(user?.id) || String((leave as any)._id) === String(user?.id)) ? () => setSelectedLeavePopup(leave) : undefined}
+                  onClick={(canManageLeaves || String(leave.userId) === String(user?.id) || String((leave as any)._id) === String(user?.id)) ? () => setSelectedLeavePopup(leave) : undefined}
                 />
               )}
             />
@@ -657,7 +658,7 @@ const MainPage = () => {
                   primaryText={leave.employeeName}
                   secondaryText={leave.formattedSecondaryText}
                   badgeContent={leave.formattedBadgeContent}
-                  onClick={(isAdmin || String(leave.userId) === String(user?.id) || String((leave as any)._id) === String(user?.id)) ? () => setSelectedLeavePopup(leave) : undefined}
+                  onClick={(canManageLeaves || String(leave.userId) === String(user?.id) || String((leave as any)._id) === String(user?.id)) ? () => setSelectedLeavePopup(leave) : undefined}
                 />
               )}
             />
@@ -791,8 +792,8 @@ const MainPage = () => {
           firstName: selectedLeavePopup.firstName || user?.firstName || "",
           lastName: selectedLeavePopup.lastName || user?.lastName || "",
           employeeName: selectedLeavePopup.employeeName || (user ? `${user.firstName} ${user.lastName}` : ""),
-          department: selectedLeavePopup.department || (user as any)?.department || "Bilinmiyor",
-          description: (isAdmin || selectedLeavePopup.userId === user?.id || (selectedLeavePopup as any)?._id === user?.id) 
+          teamName: selectedLeavePopup.teamName || (user?.teamId ? `Takım #${user.teamId}` : "Bilinmiyor"),
+          description: (canManageLeaves || selectedLeavePopup.userId === user?.id || (selectedLeavePopup as any)?._id === user?.id) 
             ? (selectedLeavePopup.details || selectedLeavePopup.description || "") 
             : null
         } : null}
@@ -805,7 +806,7 @@ const MainPage = () => {
           rejectedCount: myLeaveStats.rejectedCount,
           ratio: myLeaveStats.ratio
         } : selectedLeaveStats}
-        showActions={isAdmin && selectedLeavePopup?.status === "pending"}
+        showActions={canManageLeaves && selectedLeavePopup?.status === "pending"}
         onApprove={handleApproveLeave}
         onReject={handleRejectLeave}
       />

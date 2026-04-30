@@ -4,7 +4,6 @@ import {
   Calendar,
   Clock,
   FileText,
-  MessageSquareText,
   ClockArrowUp,
   ArrowLeft,
 } from "lucide-react";
@@ -81,7 +80,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10"
+            className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center z-50"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
@@ -142,7 +141,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center z-20"
+            className="absolute inset-0 bg-white rounded-2xl flex items-center justify-center z-50"
           >
             <div className="text-center flex flex-col items-center gap-4">
               <motion.div
@@ -188,7 +187,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
                   {leaveData.employeeName}
                 </h3>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {leaveData.department} Departmanı
+                  {leaveData.teamName} Takımı
                 </p>
               </div>
             </div>

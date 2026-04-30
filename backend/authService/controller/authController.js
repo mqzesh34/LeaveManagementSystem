@@ -1,18 +1,16 @@
 const authService = require("../service/authService");
 
-exports.register = async (req, res) => {
+exports.createUser = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, role, department } = req.body;
-    if (!email || !password || !firstName || !lastName || !role) {
+    const { email, password, firstName, lastName } = req.body;
+    if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ message: "Tüm alanlar zorunludur" });
     }
-    const user = await authService.registerUser(
+    const user = await authService.createUser(
       email,
       password,
       firstName,
-      lastName,
-      role,
-      department
+      lastName
     );
     res.status(201).json({ success: true, data: user });
   } catch (error) {
@@ -27,10 +25,6 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Email ve şifre gereklidir" });
     }
 
-    const user = await authService.getUserByEmail(email);
-    if (!user) {
-      return res.status(401).json({ message: "Geçersiz email veya şifre" });
-    }
     const result = await authService.loginUser(email, password, isRememberMe);
 
     const maxAge = isRememberMe
@@ -72,7 +66,7 @@ exports.verifyToken = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        department: user.department,
+        teamId: user.teamId,
       },
     });
   } catch (error) {
@@ -86,5 +80,14 @@ exports.getUsers = async (req, res) => {
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false });
+  }
+};
+
+exports.updateAssignment = async (req, res) => {
+  try {
+    const user = await authService.updateUserAssignment(req.params.id, req.body);
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
 };

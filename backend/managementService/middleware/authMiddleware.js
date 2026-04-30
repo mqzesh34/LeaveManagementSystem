@@ -18,6 +18,7 @@ const authMiddleware = async (req, res, next) => {
     const result = await response.json();
     if (result.success) {
       req.user = result.user;
+      req.authHeader = token.startsWith("Bearer") ? token : `Bearer ${token}`;
       next();
     } else {
       res.status(401).json({ success: false });

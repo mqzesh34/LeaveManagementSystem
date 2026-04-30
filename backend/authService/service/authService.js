@@ -2,21 +2,25 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-exports.registerUser = async (email, password, firstName, lastName, role, department) => {
+exports.createUser = async (email, password, firstName, lastName) => {
   const userExists = await User.findOne({ email });
   if (userExists) throw new Error("Bu e-posta zaten kullanımda.");
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  return await User.create({
+  const user = await User.create({
     email,
     password: hashedPassword,
     firstName,
     lastName,
-    role: role || "employee",
-    department: department || "",
+    role: "employee",
+    teamId: null,
   });
+
+  const plainUser = user.toObject();
+  delete plainUser.password;
+  return plainUser;
 };
 
 exports.loginUser = async (email, password, isRememberMe) => {
@@ -40,7 +44,7 @@ exports.loginUser = async (email, password, isRememberMe) => {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      department: user.department,
+      teamId: user.teamId,
     },
   };
 };
@@ -53,6 +57,26 @@ exports.getUserById = async (id) => {
   return await User.findById(id);
 };
 
-exports.getUserByEmail = async (email) => {
-  return await User.findOne({ email });
+exports.updateUserAssignment = async (id, assignment) => {
+  const update = {};
+
+  if (assignment.role !== undefined) {
+    if (!["admin", "team_lead", "employee"].includes(assignment.role)) {
+      throw new Error("Geçersiz kullanıcı rolü.");
+    }
+    update.role = assignment.role;
+  }
+
+  if (assignment.teamId !== undefined) {
+    update.teamId = assignment.teamId;
+  }
+
+  const user = await User.findByIdAndUpdate(id, update, {
+    new: true,
+    runValidators: true,
+    select: "-password",
+  });
+
+  if (!user) throw new Error("Kullanıcı bulunamadı.");
+  return user;
 };

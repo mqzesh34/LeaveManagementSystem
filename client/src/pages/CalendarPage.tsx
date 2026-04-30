@@ -24,10 +24,11 @@ const CalendarPage = () => {
   const params = new URLSearchParams(location.search);
   const holidaysOnlyMode = params.get("mode") === "holidays";
   const { user } = useAuth();
-  const isAdmin = user?.role?.toLowerCase() === "admin";
+  const userRole = user?.role?.toLowerCase();
+  const canManageLeaves = userRole === "admin" || userRole === "team_lead";
 
   useEffect(() => {
-    const endpoint = isAdmin ? "/leaves/admin-view" : "/leaves/team-view";
+    const endpoint = canManageLeaves ? "/leaves/admin-view" : "/leaves/team-view";
     api.get(endpoint)
       .then((result) => {
         const data = result.data || [];
@@ -75,7 +76,7 @@ const CalendarPage = () => {
 
         setEvents(mappedEvents);
       });
-  }, [holidaysOnlyMode, isAdmin]);
+  }, [holidaysOnlyMode, canManageLeaves]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

@@ -2,9 +2,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
-import { Home, LogOut, Calendar1, SlidersHorizontal, History, Plus } from "lucide-react";
+import { Home, LogOut, Calendar1, SlidersHorizontal, History, Plus, Users } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
-import { useNavigation } from "../hooks/useNavigation";
 import { authApi } from "../services/api";
 
 const Sidebar = () => {
@@ -13,11 +12,12 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { forwardTo } = useNavigation();
+  const userRole = user?.role?.toLowerCase();
+  const canManageLeaves = userRole === "admin" || userRole === "team_lead";
   const handleLogout = async () => {
     await authApi.logout();
     logout();
-    forwardTo("Giriş", "/");
+    navigate("/", { replace: true, state: { skipPageLoader: true } });
   };
   useEffect(() => {
     const updateDateTime = () => {
@@ -39,10 +39,16 @@ const Sidebar = () => {
   const menuItems = [
     { name: "AnaSayfa", href: "/main", icon: Home },
     { name: "Takvim", href: "/calendar", icon: Calendar1 },
-    ...(user?.role?.toLowerCase() === "admin"
+    ...(canManageLeaves
       ? [
         { name: "İzin İstekleri", href: "/management", icon: SlidersHorizontal },
         { name: "İstek Geçmişi", href: "/history-leaves", icon: History },
+        ...(userRole === "admin"
+          ? [{ name: "Takımlar", href: "/teams", icon: Users }]
+          : []),
+        ...(userRole === "team_lead"
+          ? [{ name: "İzin Talebi Oluştur", href: "/request-leave", icon: Plus }]
+          : []),
       ]
       : [
         { name: "İzin Talebi Oluştur", href: "/request-leave", icon: Plus },
@@ -55,7 +61,7 @@ const Sidebar = () => {
         <div className="flex justify-center w-full">
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center gap-2">
-              {user?.role?.toLowerCase() === "admin" && (
+              {user && (
                 <>
                   <img
                     src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
@@ -75,7 +81,7 @@ const Sidebar = () => {
             </div>
           </div>
         </div>
-        {user?.role?.toLowerCase() === "admin" && (
+        {user && (
           <div className="h-0.5 border rounded-full border-gray-100 my-4"></div>
         )}
         <>

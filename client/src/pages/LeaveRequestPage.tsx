@@ -167,8 +167,8 @@ const LeaveRequestPage = () => {
       } else {
         toast.error("İzin talebi oluşturulurken bir hata oluştu.");
       }
-    } catch (error) {
-      toast.error("Sunucu ile iletişim kurulamadı.");
+    } catch (error: any) {
+      toast.error(error?.message || "Sunucu ile iletişim kurulamadı.");
     }
   };
 
@@ -336,7 +336,7 @@ const LeaveRequestPage = () => {
           firstName: user?.firstName || "",
           lastName: user?.lastName || "",
           employeeName: `${user?.firstName || ""} ${user?.lastName || ""}`,
-          department: (user as any)?.department || "Bilinmiyor",
+          teamName: user?.teamId ? `Takım #${user.teamId}` : "Bilinmiyor",
           startDate: startDate || DateTime.now().toISODate(),
           days: leaveDays,
           reason: leaveType || "Belirtilmedi",

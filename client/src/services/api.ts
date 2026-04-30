@@ -32,10 +32,11 @@ export const authApi = {
     method: "POST",
     body: JSON.stringify(credentials),
   }),
-  register: (userData: any) => request(`${AUTH_BASE_URL}/register`, {
+  createUser: (userData: any) => request(`${AUTH_BASE_URL}/users`, {
     method: "POST",
     body: JSON.stringify(userData),
   }),
+  getUsers: () => request(`${AUTH_BASE_URL}/users`),
   verify: () => request(`${AUTH_BASE_URL}/verify`),
   logout: () => request(`${AUTH_BASE_URL}/logout`, { method: "POST" }),
 };

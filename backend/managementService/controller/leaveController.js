@@ -11,18 +11,16 @@ exports.getMyLeaves = async (req, res) => {
 
 exports.createLeave = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const leaveData = req.body;
-    const newLeave = await leaveService.createLeave(userId, leaveData);
+    const newLeave = await leaveService.createLeave(req.user, req.body);
     res.json({ success: true, data: newLeave });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
   }
 };
 
 exports.getTeamView = async (req, res) => {
   try {
-    const data = await leaveService.getTeamView(req.user);
+    const data = await leaveService.getTeamView(req.user, req.authHeader);
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -31,27 +29,27 @@ exports.getTeamView = async (req, res) => {
 
 exports.getStats = async (req, res) => {
   try {
-    const all = await leaveService.getAllLeaves();
+    const all = await leaveService.getManageableLeaves(req.user, req.authHeader);
     res.json({ success: true, data: all });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
   }
 };
 
 exports.approveLeave = async (req,res) => {
   try {
-    const approvedLeave = await leaveService.approveLeave(req.params.id);
+    const approvedLeave = await leaveService.approveLeave(req.params.id, req.user, req.authHeader);
     res.json({ success: true, data: approvedLeave })
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
   }
 }
 
 exports.rejectLeave = async (req,res) =>{
   try {
-    const rejectedLeave = await leaveService.rejectLeave(req.params.id)
+    const rejectedLeave = await leaveService.rejectLeave(req.params.id, req.user, req.authHeader)
     res.json({ success: true, data: rejectedLeave })
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
   }
 }

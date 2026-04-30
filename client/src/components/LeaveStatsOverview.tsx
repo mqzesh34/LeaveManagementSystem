@@ -52,7 +52,7 @@ const LeaveStatsOverview: React.FC<LeaveStatsOverviewProps> = ({
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, projectedRatio * 100)}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="absolute left-0 top-0 h-full z-10"
+              className="absolute left-0 top-0 h-full z-0"
               style={{ backgroundColor: color.light }}
             />
           )}
@@ -60,7 +60,7 @@ const LeaveStatsOverview: React.FC<LeaveStatsOverviewProps> = ({
             initial={{ width: 0 }}
             animate={{ width: `${Math.min(100, ratio * 100)}%` }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="absolute left-0 top-0 h-full z-20 rounded-full"
+            className="absolute left-0 top-0 h-full z-10 rounded-full"
             style={{ backgroundColor: color.hex }}
           />
         </div>
