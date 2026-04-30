@@ -145,12 +145,13 @@ exports.getTeamView = async (currentUser, authHeader) => {
       const employeeIds = users
         .filter((user) => ledTeamIds.includes(Number(user.teamId)) && getRole(user) === "employee")
         .map(getUserId);
+      const visibleUserIds = [...employeeIds, String(currentUser.id)];
 
-      if (!ledTeamIds.length || !employeeIds.length) return [];
+      if (!ledTeamIds.length || !visibleUserIds.length) return [];
       where = {
         ...where,
         teamId: { [Op.in]: ledTeamIds },
-        userId: { [Op.in]: employeeIds },
+        userId: { [Op.in]: visibleUserIds },
       };
     } else if (currentUser?.teamId) {
       where = { ...where, teamId: currentUser.teamId };

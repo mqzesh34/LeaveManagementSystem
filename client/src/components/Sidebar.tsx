@@ -4,11 +4,12 @@ import { DateTime } from "luxon";
 import { useEffect } from "react";
 import { Home, LogOut, Calendar1, SlidersHorizontal, History, Plus, Users } from "lucide-react";
 import { useAuth } from "../context/authContext.tsx";
-import { authApi } from "../services/api";
+import { api, authApi } from "../services/api";
 
 const Sidebar = () => {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
+  const [teamName, setTeamName] = useState<string | null>(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +33,24 @@ const Sidebar = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      if (!user) {
+        setTeamName(null);
+        return;
+      }
+
+      try {
+        const result = await api.get("/teams/my");
+        setTeamName(result.data?.teamName || null);
+      } catch (error) {
+        setTeamName(null);
+      }
+    };
+
+    fetchTeam();
+  }, [user]);
 
   const capitalize = (str: string | undefined) =>
     str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
@@ -72,9 +91,11 @@ const Sidebar = () => {
                     <span className="font-bold text-xl text-gray-800 min-w-fit truncate">
                       {`${capitalize(user.firstName)} ${capitalize(user.lastName)}`}
                     </span>
-                    <span className="text-gray-800 text-sm truncate">
-                      {user.role.toLowerCase().charAt(0).toUpperCase() + user.role.slice(1) || ""}
-                    </span>
+                    {teamName && (
+                      <span className="text-gray-800 text-sm truncate">
+                        {teamName}
+                      </span>
+                    )}
                   </div>
                 </>
               )}

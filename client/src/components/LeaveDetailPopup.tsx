@@ -187,7 +187,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
                   {leaveData.employeeName}
                 </h3>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {leaveData.teamName} Takımı
+                  {leaveData.teamName}
                 </p>
               </div>
             </div>

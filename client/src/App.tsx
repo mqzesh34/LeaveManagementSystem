@@ -19,7 +19,9 @@ const AppContent = () => {
   const location = useLocation();
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [prevPath, setPrevPath] = useState(location.pathname);
-  const skipPageLoader = Boolean((location.state as any)?.skipPageLoader);
+  const isLoginPage = location.pathname === "/" && !user;
+  const skipPageLoader = isLoginPage || Boolean((location.state as any)?.skipPageLoader);
+  const effectivePageLoading = !skipPageLoader && isPageLoading;
 
   if (location.pathname !== prevPath) {
     setPrevPath(location.pathname);
@@ -41,10 +43,10 @@ const AppContent = () => {
 
   return (
     <>
-      <PageLoader isLoading={!skipPageLoader && isPageLoading} />
+      <PageLoader isLoading={effectivePageLoading} />
       {user && <Sidebar />}
 
-      <div className={`transition-opacity ${skipPageLoader ? "duration-0" : "duration-500"} ${isPageLoading ? "opacity-0" : "opacity-100"}`}>
+      <div className={`transition-opacity ${skipPageLoader ? "duration-0" : "duration-500"} ${effectivePageLoading ? "opacity-0" : "opacity-100"}`}>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/main" replace /> : <LoginPage />} />
 
@@ -65,7 +67,7 @@ const AppContent = () => {
 function App() {
   return (
     <>
-      <Toaster position="top-left" />
+      <Toaster position="top-left" containerStyle={{ zIndex: 100000 }} />
       <Router>
         <AppContent />
       </Router>

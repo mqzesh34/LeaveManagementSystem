@@ -36,17 +36,20 @@ const LeaveRequestPage = () => {
 
   const [myLeaves, setMyLeaves] = useState<any[]>([]);
   const [teamLeaves, setTeamLeaves] = useState<any[]>([]);
+  const [teamName, setTeamName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [myRes, teamRes] = await Promise.all([
+        const [myRes, teamRes, myTeamRes] = await Promise.all([
           api.get("/leaves/my"),
-          api.get("/leaves/team-view")
+          api.get("/leaves/team-view"),
+          api.get("/teams/my"),
         ]);
 
         if (myRes.success && Array.isArray(myRes.data)) setMyLeaves(myRes.data);
         if (teamRes.success && Array.isArray(teamRes.data)) setTeamLeaves(teamRes.data);
+        if (myTeamRes.success) setTeamName(myTeamRes.data?.teamName || null);
       } catch (error) {
         console.error("Veri çekme hatası:", error);
       }
@@ -336,7 +339,7 @@ const LeaveRequestPage = () => {
           firstName: user?.firstName || "",
           lastName: user?.lastName || "",
           employeeName: `${user?.firstName || ""} ${user?.lastName || ""}`,
-          teamName: user?.teamId ? `Takım #${user.teamId}` : "Bilinmiyor",
+          teamName: teamName || "Bilinmiyor",
           startDate: startDate || DateTime.now().toISODate(),
           days: leaveDays,
           reason: leaveType || "Belirtilmedi",

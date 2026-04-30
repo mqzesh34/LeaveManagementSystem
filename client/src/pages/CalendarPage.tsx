@@ -4,9 +4,9 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import trLocale from "@fullcalendar/core/locales/tr";
+import { DateTime } from "luxon";
 import { useLocation } from "react-router-dom";
 import holidays from "../data/holidays.json";
-import { useAuth } from "../context/authContext";
 
 import { api } from "../services/api";
 
@@ -23,13 +23,9 @@ const CalendarPage = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const holidaysOnlyMode = params.get("mode") === "holidays";
-  const { user } = useAuth();
-  const userRole = user?.role?.toLowerCase();
-  const canManageLeaves = userRole === "admin" || userRole === "team_lead";
 
   useEffect(() => {
-    const endpoint = canManageLeaves ? "/leaves/admin-view" : "/leaves/team-view";
-    api.get(endpoint)
+    api.get("/leaves/team-view")
       .then((result) => {
         const data = result.data || [];
         const mappedEvents: any[] = [];
@@ -37,11 +33,9 @@ const CalendarPage = () => {
         holidays.forEach((holiday) => {
           const gunDongusu = Math.ceil(holiday.days);
           for (let i = 0; i < gunDongusu; i++) {
-            const date = new Date(holiday.date);
-            date.setDate(date.getDate() + i);
             mappedEvents.push({
               title: holiday.name,
-              start: date.toISOString().split("T")[0],
+              start: DateTime.fromISO(holiday.date).plus({ days: i }).toISODate(),
               allDay: true,
               backgroundColor: statusColor.holiday,
               borderColor: "transparent",
@@ -55,11 +49,9 @@ const CalendarPage = () => {
             .filter((leave: any) => leave.status !== "rejected")
             .forEach((leave: any) => {
               for (let i = 0; i < leave.days; i++) {
-                const eventDate = new Date(leave.startDate);
-                eventDate.setDate(eventDate.getDate() + 1 + i);
                 mappedEvents.push({
                   title: `${leave.firstName} ${leave.lastName}`,
-                  start: eventDate.toISOString().split("T")[0],
+                  start: DateTime.fromISO(leave.startDate).plus({ days: i }).toISODate(),
                   allDay: true,
                   backgroundColor: statusColor[leave.status],
                   borderColor: "transparent",
@@ -76,7 +68,7 @@ const CalendarPage = () => {
 
         setEvents(mappedEvents);
       });
-  }, [holidaysOnlyMode, canManageLeaves]);
+  }, [holidaysOnlyMode]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

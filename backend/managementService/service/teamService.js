@@ -68,6 +68,15 @@ exports.getTeams = async (authHeader) => {
   return enrichTeams(teams, authHeader);
 };
 
+exports.getMyTeam = async (currentUser) => {
+  if (!currentUser?.teamId) return null;
+
+  const team = await Team.findByPk(currentUser.teamId);
+  if (!team) return null;
+
+  return team.get({ plain: true });
+};
+
 exports.createTeam = async (teamName) => {
   if (!teamName?.trim()) {
     const error = new Error("Takım adı zorunludur.");

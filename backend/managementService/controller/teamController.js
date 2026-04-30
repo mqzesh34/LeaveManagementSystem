@@ -9,6 +9,15 @@ exports.getTeams = async (req, res) => {
   }
 };
 
+exports.getMyTeam = async (req, res) => {
+  try {
+    const team = await teamService.getMyTeam(req.user);
+    res.json({ success: true, data: team });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
 exports.createTeam = async (req, res) => {
   try {
     const team = await teamService.createTeam(req.body.teamName);

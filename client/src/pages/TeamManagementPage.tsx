@@ -9,6 +9,16 @@ import { api, authApi } from "../services/api";
 const inputClass =
   "w-full p-3 rounded-xl border-2 border-gray-100 bg-gray-50 focus:border-blue-500 focus:outline-none font-semibold text-gray-700";
 
+const formatRoleLabel = (role: string) => {
+  const labels: Record<string, string> = {
+    admin: "Yönetici",
+    team_lead: "Takım Lideri",
+    employee: "Çalışan",
+  };
+
+  return labels[role] || role;
+};
+
 const TeamManagementPage = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
@@ -145,7 +155,7 @@ const TeamManagementPage = () => {
               lastName={user.lastName}
               primaryText={`${user.firstName} ${user.lastName}`}
               secondaryText={user.email}
-              badgeContent={user.role}
+              badgeContent={formatRoleLabel(user.role)}
             />
           )}
         />
