@@ -9,6 +9,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         field: "_id",
       },
+      teamId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: "team_id",
+        references: { model: "teams", key: "id" },
+      },
       startDate: {
         type: DataTypes.DATEONLY,
         field: "start_date",
@@ -33,5 +39,10 @@ module.exports = (sequelize, DataTypes) => {
       updatedAt: false,
     },
   );
+
+  Leave.associate = (models) => {
+    Leave.belongsTo(models.Team, { foreignKey: "teamId", as: "team" });
+  };
+
   return Leave;
 };
