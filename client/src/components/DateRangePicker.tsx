@@ -1,7 +1,7 @@
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useState } from "react";
@@ -46,11 +46,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   const renderContinuousRange = (dateISO: string, index: number) => {
     if (!startDate || !endDate || startDate === endDate) return null;
-    
+
     const isStart = startDate === dateISO;
     const isEnd = endDate === dateISO;
     const isInRange = dateISO > startDate && dateISO < endDate;
-    
+
     if (!isStart && !isEnd && !isInRange) return null;
 
     const gridPos = (index + emptyDays) % 7;
@@ -58,12 +58,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const isSunday = gridPos === 6;
 
     let classes = "absolute inset-y-0 border-dashed border-blue-200 z-[-1] ";
-    
+
     if (isStart) {
-      classes += "left-0 right-[-4px] border-t-2 border-b-2 border-l-2 rounded-l-xl";
+      classes +=
+        "left-0 right-[-4px] border-t-2 border-b-2 border-l-2 rounded-l-xl";
       if (isSunday) classes += " border-r-2 rounded-r-xl right-0";
     } else if (isEnd) {
-      classes += "left-[-4px] right-0 border-t-2 border-b-2 border-r-2 rounded-r-xl";
+      classes +=
+        "left-[-4px] right-0 border-t-2 border-b-2 border-r-2 rounded-r-xl";
       if (isMonday) classes += " border-l-2 rounded-l-xl left-0";
     } else {
       classes += "left-[-4px] right-[-4px] border-t-2 border-b-2";
@@ -75,18 +77,23 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   return (
-    <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden w-full max-w-[350px]">
+    <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden w-full max-w-88">
       <div className="bg-gray-50 border-b-2 border-gray-100 p-3.5 flex items-center gap-3">
         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-gray-100">
           <CalendarIcon className="w-5 h-5 text-gray-700" />
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tarih</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            Tarih
+          </span>
           <span className="text-[13px] font-bold text-gray-800 leading-tight">
             {startDate ? (
               <>
-                {DateTime.fromISO(startDate).setLocale("tr").toFormat("dd.MM.yyyy")}
-                {endDate && ` - ${DateTime.fromISO(endDate).setLocale("tr").toFormat("dd.MM.yyyy")}`}
+                {DateTime.fromISO(startDate)
+                  .setLocale("tr")
+                  .toFormat("dd.MM.yyyy")}
+                {endDate &&
+                  ` - ${DateTime.fromISO(endDate).setLocale("tr").toFormat("dd.MM.yyyy")}`}
               </>
             ) : (
               "Lütfen tarih seçiniz..."
@@ -101,23 +108,36 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             {monthName} {year}
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setViewDate(viewDate.minus({ months: 1 }))} className="p-1 hover:bg-gray-100 rounded-lg transition-colors text-gray-400">
+            <button
+              onClick={() => setViewDate(viewDate.minus({ months: 1 }))}
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors text-gray-400"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={() => setViewDate(viewDate.plus({ months: 1 }))} className="p-1 hover:bg-gray-100 rounded-lg transition-colors text-gray-400">
+            <button
+              onClick={() => setViewDate(viewDate.plus({ months: 1 }))}
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors text-gray-400"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-7 gap-y-2 text-center">
-          {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(d => (
-            <span key={d} className="text-[10px] font-bold text-gray-300 uppercase">{d}</span>
+          {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map((d) => (
+            <span
+              key={d}
+              className="text-[10px] font-bold text-gray-300 uppercase"
+            >
+              {d}
+            </span>
           ))}
-          
-          {Array(emptyDays).fill(0).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
+
+          {Array(emptyDays)
+            .fill(0)
+            .map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
 
           {days.map((dateISO, index) => {
             const todayISO = DateTime.now().toISODate() || "";

@@ -1,11 +1,4 @@
-import {
-  FileText,
-  Send,
-  Users,
-  CalendarDays,
-  History,
-  Eye,
-} from "lucide-react";
+import { FileText, Send, Users, CalendarDays, History } from "lucide-react";
 import { DateTime } from "luxon";
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -16,7 +9,6 @@ import { useAuth } from "../context/authContext";
 import DateRangePicker from "../components/DateRangePicker";
 import DashboardCard from "../components/DashboardCard";
 import LeaveStatsOverview from "../components/LeaveStatsOverview";
-import LeaveDetailPopup from "../components/LeaveDetailPopup";
 import holidaysData from "../data/holidays.json";
 import toast from "react-hot-toast";
 
@@ -32,24 +24,21 @@ const LeaveRequestPage = () => {
   const [endDate, setEndDate] = useState<string | null>(null);
   const [leaveType, setLeaveType] = useState("");
   const [reason, setReason] = useState("");
-  const [showPreview, setShowPreview] = useState(false);
 
   const [myLeaves, setMyLeaves] = useState<any[]>([]);
   const [teamLeaves, setTeamLeaves] = useState<any[]>([]);
-  const [teamName, setTeamName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [myRes, teamRes, myTeamRes] = await Promise.all([
+        const [myRes, teamRes] = await Promise.all([
           api.get("/leaves/my"),
           api.get("/leaves/team-view"),
-          api.get("/teams/my"),
         ]);
 
         if (myRes.success && Array.isArray(myRes.data)) setMyLeaves(myRes.data);
-        if (teamRes.success && Array.isArray(teamRes.data)) setTeamLeaves(teamRes.data);
-        if (myTeamRes.success) setTeamName(myTeamRes.data?.teamName || null);
+        if (teamRes.success && Array.isArray(teamRes.data))
+          setTeamLeaves(teamRes.data);
       } catch (error) {
         console.error("Veri çekme hatası:", error);
       }
@@ -59,9 +48,9 @@ const LeaveRequestPage = () => {
 
   const stats = useMemo(() => {
     const safeLeaves = Array.isArray(myLeaves) ? myLeaves : [];
-    const approved = safeLeaves.filter(l => l.status === "approved");
-    const pending = safeLeaves.filter(l => l.status === "pending").length;
-    const rejected = safeLeaves.filter(l => l.status === "rejected").length;
+    const approved = safeLeaves.filter((l) => l.status === "approved");
+    const pending = safeLeaves.filter((l) => l.status === "pending").length;
+    const rejected = safeLeaves.filter((l) => l.status === "rejected").length;
 
     const totalUsed = approved.reduce((sum, l) => sum + (l.days ?? 0), 0);
     const totalAllowed = (user as any)?.totalAllowed || 20;
@@ -75,8 +64,8 @@ const LeaveRequestPage = () => {
       history: {
         approved: approved.length,
         pending,
-        rejected
-      }
+        rejected,
+      },
     };
   }, [myLeaves, user]);
 
@@ -89,7 +78,7 @@ const LeaveRequestPage = () => {
         ? DateTime.fromISO(endDate).endOf("day")
         : selectedStart.endOf("day");
 
-      return teamLeaves.filter(leave => {
+      return teamLeaves.filter((leave) => {
         if (leave.userId === user?.id) return false;
 
         const leaveStart = DateTime.fromISO(leave.startDate).startOf("day");
@@ -115,14 +104,19 @@ const LeaveRequestPage = () => {
     while (current <= end) {
       const isWeekend = current.weekday >= 6;
       if (!isWeekend) {
-        const holidayMatch = holidays.find(h => {
+        const holidayMatch = holidays.find((h) => {
           const hStart = DateTime.fromISO(h.date).startOf("day");
-          const hEnd = hStart.plus({ days: Math.ceil(h.days) - 1 }).endOf("day");
+          const hEnd = hStart
+            .plus({ days: Math.ceil(h.days) - 1 })
+            .endOf("day");
           return current >= hStart && current <= hEnd;
         });
         if (!holidayMatch) {
           total += 1;
-        } else if (holidayMatch.days === 0.5 && holidayMatch.date === current.toISODate()) {
+        } else if (
+          holidayMatch.days === 0.5 &&
+          holidayMatch.date === current.toISODate()
+        ) {
           total += 0.5;
         }
       }
@@ -145,22 +139,17 @@ const LeaveRequestPage = () => {
     return true;
   };
 
-  const handlePreview = () => {
-    if (!validateForm()) return;
-    setShowPreview(true);
-  };
-
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     try {
       const response = await api.post("/leaves/add", {
         startDate,
         days: leaveDays,
         reason: leaveType,
-        details: reason
+        details: reason,
       });
-      
+
       if (response.success) {
         toast.success("İzin talebiniz başarıyla alındı!");
         setStartDate(null);
@@ -184,16 +173,19 @@ const LeaveRequestPage = () => {
           className="col-span-2 shadow-sm"
         >
           <div className="flex flex-col gap-4 h-full">
-            <div className="grid grid-cols-2 gap-8">
-              <div className="flex flex-col gap-4 h-full">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,350px)] gap-8">
+              <div className="flex flex-col gap-4 h-full min-w-0">
                 <div className="flex flex-col gap-2">
                   <select
                     value={leaveType}
                     onChange={(e) => setLeaveType(e.target.value)}
-                    className={`w-full p-3.5 rounded-xl border-2 border-gray-100 bg-gray-50 focus:border-blue-500 focus:outline-none transition-all duration-200 font-semibold appearance-none ${leaveType === "" ? "text-gray-400" : "text-gray-700"
-                      }`}
+                    className={`w-full p-3.5 rounded-xl border-2 border-gray-100 bg-gray-50 focus:border-blue-500 focus:outline-none transition-all duration-200 font-semibold appearance-none ${
+                      leaveType === "" ? "text-gray-400" : "text-gray-700"
+                    }`}
                   >
-                    <option value="" disabled hidden>İzin türünü seçiniz</option>
+                    <option value="" disabled hidden>
+                      İzin türünü seçiniz
+                    </option>
                     <option>Yıllık İzin</option>
                     <option>Mazeret İzni</option>
                     <option>Hastalık / Rapor</option>
@@ -201,7 +193,7 @@ const LeaveRequestPage = () => {
                   </select>
                 </div>
 
-                <div className="relative flex-1">
+                <div className="relative h-full">
                   <textarea
                     placeholder="İzin talebinizle ilgili bir açıklama yazınız..."
                     value={reason}
@@ -210,20 +202,26 @@ const LeaveRequestPage = () => {
                     className="w-full p-4 rounded-xl border-2 border-gray-100 bg-gray-50 focus:border-blue-500 focus:outline-none transition-all duration-200 font-semibold text-gray-700 h-full resize-none pb-8"
                   />
                   <motion.div
-                    animate={reason.length === 280 ? { x: [0, -2, 2, -2, 2, 0] } : {}}
+                    animate={
+                      reason.length === 280 ? { x: [0, -2, 2, -2, 2, 0] } : {}
+                    }
                     transition={{ duration: 0.4 }}
-                    className={`absolute bottom-3 right-4 inline-block shrink-0 border text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap transition-colors duration-200 ${reason.length === 280
-                      ? "bg-rose-100 border-rose-200 text-rose-600"
-                      : "bg-gray-200 border-gray-300 text-gray-800"
-                      }`}
+                    className={`absolute bottom-3 right-4 inline-block shrink-0 border text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap transition-colors duration-200 ${
+                      reason.length === 280
+                        ? "bg-rose-100 border-rose-200 text-rose-600"
+                        : "bg-gray-200 border-gray-300 text-gray-800"
+                    }`}
                   >
                     {reason.length} / 280
                   </motion.div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-center">
+              <div
+                className="flex flex-col gap-4 h-full w-full mx-auto"
+                style={{ maxWidth: 350 }}
+              >
+                <div className="flex flex-1 w-full">
                   <DateRangePicker
                     startDate={startDate}
                     endDate={endDate}
@@ -240,8 +238,12 @@ const LeaveRequestPage = () => {
                       <CalendarDays className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-bold text-gray-800 leading-tight">Planlanan İzin</p>
-                      <p className="text-[10px] text-blue-600 font-semibold truncate">Hafta sonu/tatil hariç</p>
+                      <p className="text-[11px] font-bold text-gray-800 leading-tight">
+                        Planlanan İzin
+                      </p>
+                      <p className="text-[10px] text-blue-600 font-semibold truncate">
+                        Hafta sonu/tatil hariç
+                      </p>
                     </div>
                   </div>
                   <div className="text-base font-black text-blue-600 tabular-nums ml-2 shrink-0">
@@ -251,17 +253,10 @@ const LeaveRequestPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 shrink-0 mt-auto">
-              <button
-                onClick={handlePreview}
-                className="py-3.5 bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-600 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 group"
-              >
-                <Eye className="w-5 h-5 transition-transform" />
-                Önizle
-              </button>
+            <div className="mt-auto">
               <button
                 onClick={handleSubmit}
-                className="py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 group"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 group"
               >
                 <Send className="w-5 h-5" />
                 Talebi Gönder
@@ -303,7 +298,9 @@ const LeaveRequestPage = () => {
                   allItems={overlappingTeamLeaves}
                   emptyText="Kimse izinli değil"
                   renderItem={(leave: any, idx: number) => {
-                    const start = DateTime.fromISO(leave.startDate).setLocale("tr");
+                    const start = DateTime.fromISO(leave.startDate).setLocale(
+                      "tr",
+                    );
                     const end = leave.endDate
                       ? DateTime.fromISO(leave.endDate).setLocale("tr")
                       : start.plus({ days: (leave.days || 1) - 1 });
@@ -315,7 +312,11 @@ const LeaveRequestPage = () => {
                         lastName={leave.lastName}
                         primaryText={`${leave.firstName} ${leave.lastName}`}
                         secondaryText={`${start.toFormat("dd LLL")} - ${end.toFormat("dd LLL")}`}
-                        badgeContent={leave.leaveType === "İzin" || !leave.leaveType ? "İzinli" : leave.leaveType}
+                        badgeContent={
+                          leave.leaveType === "İzin" || !leave.leaveType
+                            ? "İzinli"
+                            : leave.leaveType
+                        }
                       />
                     );
                   }}
@@ -323,43 +324,20 @@ const LeaveRequestPage = () => {
               </motion.div>
             ) : (
               <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-1 text-center">
-                <p className="text-[13px] font-bold text-gray-700">Ekip durumunu merak mı ediyorsunuz?</p>
-                <p className="text-[11px] text-gray-400 font-medium">Tarih aralığı seçerek o tarihlerde kimlerin izinli olacağını görebilirsiniz.</p>
+                <p className="text-[13px] font-bold text-gray-700">
+                  Ekip durumunu merak mı ediyorsunuz?
+                </p>
+                <p className="text-[11px] text-gray-400 font-medium">
+                  Tarih aralığı seçerek o tarihlerde kimlerin izinli olacağını
+                  görebilirsiniz.
+                </p>
               </div>
             )}
           </div>
         </DashboardCard>
       </div>
-
-      <LeaveDetailPopup
-        isOpen={showPreview}
-        onClose={() => setShowPreview(false)}
-        title="İzin Talebi Önizleme"
-        leaveData={{
-          firstName: user?.firstName || "",
-          lastName: user?.lastName || "",
-          employeeName: `${user?.firstName || ""} ${user?.lastName || ""}`,
-          teamName: teamName || "Bilinmiyor",
-          startDate: startDate || DateTime.now().toISODate(),
-          days: leaveDays,
-          reason: leaveType || "Belirtilmedi",
-          description: reason,
-          status: "pending",
-          createdAt: DateTime.now().toISO(),
-          leaveId: 0,
-        }}
-        stats={{
-          totalUsed: stats.totalUsed,
-          totalAllowed: stats.totalAllowed,
-          remaining: stats.remaining,
-          pendingCount: stats.history.pending,
-          approvedCount: stats.history.approved,
-          rejectedCount: stats.history.rejected,
-          ratio: stats.ratio,
-        }}
-        showActions={false}
-      />
-    </>);
+    </>
+  );
 };
 
 export default LeaveRequestPage;
