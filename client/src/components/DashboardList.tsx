@@ -8,6 +8,7 @@ interface DashboardListProps<T> {
   loading?: boolean;
   emptyText?: string;
   disableLimit?: boolean;
+  showScrollbar?: boolean;
 }
 
 function DashboardList<T>({
@@ -18,6 +19,7 @@ function DashboardList<T>({
   loading = false,
   emptyText = "Kayıt bulunamadı.",
   disableLimit = false,
+  showScrollbar = false,
 }: DashboardListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(1);
@@ -50,7 +52,7 @@ function DashboardList<T>({
     <div className="flex-1 min-h-0 relative">
       <div
         ref={containerRef}
-        className="space-y-2 h-full overflow-y-auto no-scrollbar"
+        className={`space-y-2 h-full overflow-y-auto ${showScrollbar ? "pr-1" : "no-scrollbar"}`}
       >
         {allItems.length === 0 ? (
           <p className="text-sm text-gray-400 italic text-center mt-4">

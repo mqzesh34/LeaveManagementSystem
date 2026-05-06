@@ -20,16 +20,16 @@ exports.getMyTeam = async (req, res) => {
 
 exports.createTeam = async (req, res) => {
   try {
-    const team = await teamService.createTeam(req.body.teamName);
+    const team = await teamService.createTeam(req.body.teamName, req.body.teamLeadId, req.authHeader);
     res.status(201).json({ success: true, data: team });
   } catch (error) {
     res.status(error.statusCode || 500).json({ success: false, message: error.message });
   }
 };
 
-exports.assignTeamLead = async (req, res) => {
+exports.updateTeam = async (req, res) => {
   try {
-    const team = await teamService.assignTeamLead(req.params.id, req.body.userId, req.authHeader);
+    const team = await teamService.updateTeam(req.params.id, req.body, req.authHeader);
     res.json({ success: true, data: team });
   } catch (error) {
     res.status(error.statusCode || 500).json({ success: false, message: error.message });
@@ -39,6 +39,15 @@ exports.assignTeamLead = async (req, res) => {
 exports.assignTeamMembers = async (req, res) => {
   try {
     const team = await teamService.assignTeamMembers(req.params.id, req.body.userIds, req.authHeader);
+    res.json({ success: true, data: team });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteTeam = async (req, res) => {
+  try {
+    const team = await teamService.deleteTeam(req.params.id, req.authHeader);
     res.json({ success: true, data: team });
   } catch (error) {
     res.status(error.statusCode || 500).json({ success: false, message: error.message });

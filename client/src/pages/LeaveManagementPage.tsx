@@ -1,12 +1,12 @@
+import { DateTime } from "luxon";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, XCircle, AlarmClockCheck } from "lucide-react";
+import { api } from "../services/api";
 import DashboardCard from "../components/DashboardCard";
 import DashboardList from "../components/DashboardList";
 import EmployeeListItem from "../components/EmployeeListItem";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { DateTime } from "luxon";
-import { useEffect, useMemo, useState } from "react";
-import { api } from "../services/api";
 
-const HistoryLeavesPage = () => {
+const LeaveManagementPage = () => {
     const [allData, setAllData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,7 @@ const HistoryLeavesPage = () => {
         fetchData();
     }, []);
 
-    const { approvedLeaves, rejectedLeaves } = useMemo(() => {
+    const { approvedLeaves, rejectedLeaves, pendingLeaves } = useMemo(() => {
         const now = DateTime.now();
 
         const leavesOnly = allData
@@ -44,7 +44,7 @@ const HistoryLeavesPage = () => {
             }))
             .filter((leave: any) => {
                 const leaveDate = DateTime.fromISO(leave.startDate);
-                return leaveDate <= now.endOf("day");
+                return leaveDate >= now.endOf("day");
             })
             .sort(
                 (a: any, b: any) =>
@@ -61,6 +61,10 @@ const HistoryLeavesPage = () => {
                 (leave: any) =>
                     leave.status === "rejected",
             ),
+            pendingLeaves: leavesOnly.filter(
+                (leave: any) =>
+                    leave.status === "pending",
+            ),
         };
     }, [allData]);
 
@@ -76,15 +80,15 @@ const HistoryLeavesPage = () => {
         <div>
             <div className="no-scrollbar absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
                 <DashboardCard
-                    title="Geçmişte Onaylanan İstekler"
+                    title="Onaylanan İstekler"
                     icon={<CheckCircle2 className="w-7 h-7 text-emerald-500" />}
-                    className="w-[50%] h-full"
+                    className="w-[33%] h-full"
                 >
                     <DashboardList
                         allItems={approvedLeaves}
                         loading={loading}
                         disableLimit={true}
-                        emptyText="Geçmişte onaylanan izin kaydı bulunamadı."
+                        emptyText="Bu dönemde onaylanan izin talebi bulunmuyor."
                         renderItem={(leave: any) => (
                             <EmployeeListItem
                                 key={leave.leaveId}
@@ -103,15 +107,15 @@ const HistoryLeavesPage = () => {
                 </DashboardCard>
 
                 <DashboardCard
-                    title="Geçmişte Onaylanmayan İstekler"
+                    title="Onaylanmayan İstekler"
                     icon={<XCircle className="w-7 h-7 text-rose-500" />}
-                    className="w-[50%] h-full"
+                    className="w-[33%] h-full"
                 >
                     <DashboardList
                         allItems={rejectedLeaves}
                         loading={loading}
                         disableLimit={true}
-                        emptyText="Geçmişte reddedilen izin kaydı bulunamadı."
+                        emptyText="Bu dönemde reddedilen izin talebi bulunmuyor."
                         renderItem={(leave: any) => (
                             <EmployeeListItem
                                 key={leave.leaveId}
@@ -129,9 +133,35 @@ const HistoryLeavesPage = () => {
                     />
                 </DashboardCard>
 
+                <DashboardCard
+                    title="Bekleyen İstekler"
+                    icon={<AlarmClockCheck className="w-7 h-7 text-amber-500" />}
+                    className="w-[33%] h-full"
+                >
+                    <DashboardList
+                        allItems={pendingLeaves}
+                        loading={loading}
+                        disableLimit={true}
+                        emptyText="Onay bekleyen izin talebi bulunmuyor."
+                        renderItem={(leave: any) => (
+                            <EmployeeListItem
+                                key={leave.leaveId}
+                                firstName={leave.firstName}
+                                lastName={leave.lastName}
+                                primaryText={leave.employeeName}
+                                secondaryText={`${leave.reason} • ${DateTime.fromISO(
+                                    leave.startDate,
+                                )
+                                    .setLocale("tr")
+                                    .toLocaleString(DateTime.DATE_MED)}`}
+                                badgeContent={`${leave.days} gün`}
+                            />
+                        )}
+                    />
+                </DashboardCard>
             </div>
         </div>
     );
 };
 
-export default HistoryLeavesPage;
+export default LeaveManagementPage;

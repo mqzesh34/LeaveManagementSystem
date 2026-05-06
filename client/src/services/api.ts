@@ -37,6 +37,9 @@ export const authApi = {
     body: JSON.stringify(userData),
   }),
   getUsers: () => request(`${AUTH_BASE_URL}/users`),
+  deleteUser: (id: string) => request(`${AUTH_BASE_URL}/users/${id}`, {
+    method: "DELETE",
+  }),
   verify: () => request(`${AUTH_BASE_URL}/verify`),
   logout: () => request(`${AUTH_BASE_URL}/logout`, { method: "POST" }),
 };

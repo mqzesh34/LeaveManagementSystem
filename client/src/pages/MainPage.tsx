@@ -41,6 +41,7 @@ const MainPage = () => {
   const [loading, setLoading] = useState(true);
   const [topLeaversPopup, setTopLeaversPopup] = useState<any>(null);
   const [selectedLeavePopup, setSelectedLeavePopup] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"stats" | "my">("stats");
   const { user } = useAuth();
 
   const userRole = user?.role?.toLowerCase();
@@ -49,12 +50,11 @@ const MainPage = () => {
 
   useEffect(() => {
     if (!canManageLeaves) {
-      setLoading(false);
       return;
     }
     const fetchDashboardData = async () => {
       try {
-        const result = await api.get("/leaves/admin-view");
+        const result = await api.get("/leaves/manager-view");
         if (result.success) {
           setAllData(result.data);
         }
@@ -82,19 +82,21 @@ const MainPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!canManageLeaves) {
-      const fetchMyLeaves = async () => {
-        try {
-          const result = await api.get("/leaves/my");
-          if (result.success) {
-            setMyLeaves(result.data);
-          }
-        } catch (error) {
-          console.error("Kişisel izin verisi alınamadı:", error);
+    const fetchMyLeaves = async () => {
+      try {
+        const result = await api.get("/leaves/my");
+        if (result.success) {
+          setMyLeaves(result.data);
         }
-      };
-      fetchMyLeaves();
-    }
+      } catch (error) {
+        console.error("Kişisel izin verisi alınamadı:", error);
+      } finally {
+        if (!canManageLeaves) {
+          setLoading(false);
+        }
+      }
+    };
+    fetchMyLeaves();
   }, [canManageLeaves]);
 
   const { stats, chartData } = useMemo(() => {
@@ -343,6 +345,68 @@ const MainPage = () => {
     }
   };
 
+  const personalProfileContent = user ? (
+    <div className="flex flex-col w-full flex-1 min-h-0 gap-4">
+      <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 shrink-0">
+        <img
+          src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
+          alt="Profil"
+          className="w-14 h-14 rounded-full object-cover border border-gray-200 shrink-0"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-lg font-bold text-gray-800 truncate">
+            {`${user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)} ${user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)}`}
+          </p>
+          <p className="text-sm text-gray-500 truncate">
+            {user.email ?? ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-xl border-2 border-gray-200 shrink-0">
+        <LeaveStatsOverview
+          totalUsed={myLeaveStats.approved}
+          totalAllowed={myLeaveStats.totalAllowed}
+          approvedCount={0}
+          pendingCount={myLeaveStats.pending}
+          rejectedCount={0}
+          showHistory={false}
+        />
+      </div>
+
+      <div className="flex items-center gap-2 mb-1 shrink-0">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+          İzin Geçmişim
+        </h2>
+      </div>
+      <DashboardList
+        allItems={myLeaveStats.myLeavesHistory}
+        loading={loading}
+        emptyText="Henüz kullanılan izin bulunmuyor."
+        disableLimit={true}
+        renderItem={(leave: any) => (
+          <EmployeeListItem
+            key={leave.id ?? leave.leaveId}
+            primaryText={leave.reason ?? "İzin"}
+            secondaryText={DateTime.fromISO(leave.startDate)
+              .setLocale("tr")
+              .toLocaleString(DateTime.DATE_MED)}
+            badgeContent={`${leave.days} gün`}
+            icon={
+              leave.status === "rejected" || (leave.status === "pending" && DateTime.fromISO(leave.startDate).startOf("day") < now.startOf("day")) ? (
+                <XCircle className="w-8 h-8 text-rose-500" />
+              ) : leave.status === "pending" ? (
+                <AlarmClockCheck className="w-8 h-8 text-amber-500" />
+              ) : (
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              )
+            }
+            onClick={() => setSelectedLeavePopup(leave)}
+          />
+        )}
+      />
+    </div>
+  ) : null;
 
   if (loading)
     return (
@@ -354,207 +418,172 @@ const MainPage = () => {
   return (
     <>
       <div className="no-scrollbar cursor-default absolute top-20 bottom-20 left-72 right-8 flex-row flex gap-4">
-        {canManageLeaves && (
+        {canManageLeaves ? (
           <DashboardCard
-            title="İstatistikler"
-            icon={
-              <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" />
+            title={viewMode === "stats" ? "İstatistikler" : "Profil Bilgilerim"}
+            icon={userRole === "admin" ? <FileChartColumnIncreasing className="w-7 h-7 text-amber-500" /> : undefined}
+            rightContent={
+              userRole === "team_lead" && (
+                <div className="flex bg-gray-100 p-1 rounded-xl shadow-inner">
+                  <button
+                    onClick={() => setViewMode("stats")}
+                    className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 ${
+                      viewMode === "stats"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Takım
+                  </button>
+                  <button
+                    onClick={() => setViewMode("my")}
+                    className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 ${
+                      viewMode === "my"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Kişisel
+                  </button>
+                </div>
+              )
             }
             className="w-[33%]"
           >
-            <div className="flex flex-col w-full flex-1 min-h-0">
-              <div className="flex flex-row items-center w-full justify-between gap-4 shrink-0 min-w-0 h-47.5">
-                <div className="relative w-40 h-40 shrink-0 non-select select-none pointer-events-none focus:outline-none">
-                  <ResponsiveContainer
-                    width="100%"
-                    height="100%"
-                    className="non-select select-none"
-                  >
-                    <PieChart
-                      className="non-select select-none focus:outline-none"
-                      style={{ outline: "none" }}
+            {viewMode === "stats" ? (
+              <div className="flex flex-col w-full flex-1 min-h-0">
+                <div className="flex flex-row items-center w-full justify-between gap-4 shrink-0 min-w-0 h-47.5">
+                  <div className="relative w-40 h-40 shrink-0 non-select select-none pointer-events-none focus:outline-none">
+                    <ResponsiveContainer
+                      width="100%"
+                      height="100%"
+                      className="non-select select-none"
                     >
-                      <Pie
-                        data={chartData}
-                        innerRadius="80%"
-                        outerRadius="100%"
-                        cornerRadius={6}
-                        paddingAngle={4}
-                        dataKey="value"
+                      <PieChart
+                        className="non-select select-none focus:outline-none"
+                        style={{ outline: "none" }}
                       >
-                        {chartData.map((entry, index) => (
-                          <Cell key={index} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
-                    <span className="text-4xl font-bold text-gray-800">
-                      {stats.total}
-                    </span>
-                    <span className="text-[11px] text-gray-500 font-bold tracking-tight">
-                      Toplam İstek
-                    </span>
+                        <Pie
+                          data={chartData}
+                          innerRadius="80%"
+                          outerRadius="100%"
+                          cornerRadius={6}
+                          paddingAngle={4}
+                          dataKey="value"
+                        >
+                          {chartData.map((entry, index) => (
+                            <Cell key={index} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
+                      <span className="text-4xl font-bold text-gray-800">
+                        {stats.total}
+                      </span>
+                      <span className="text-[11px] text-gray-500 font-bold tracking-tight">
+                        Toplam İstek
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-center gap-4 flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pl-2">
+                    {chartData.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between min-w-0"
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span
+                            className="w-3.5 h-3.5 rounded-full shrink-0"
+                            style={{ backgroundColor: item.fill }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">
+                              {item.name}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-1">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-center gap-4 flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pl-2">
-                  {chartData.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between min-w-0"
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span
-                          className="w-3.5 h-3.5 rounded-full shrink-0"
-                          style={{ backgroundColor: item.fill }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
-                            {item.name}
-                          </p>
+                <div className="w-[50%] h-1 mx-auto my-6 rounded-full bg-gray-200 shrink-0"></div>
+
+                <div className="flex items-center justify-center gap-2 mb-3 shrink-0">
+                  <h2 className="text-xl truncate font-bold text-gray-800">
+                    - En Çok İzin Kullanan Çalışanlar -
+                  </h2>
+                </div>
+
+                <DashboardList
+                  allItems={allTopLeaveUsers}
+                  loading={loading}
+                  emptyText="Henüz onaylanan izin bulunmuyor."
+                  renderItem={(user: any) => (
+                    <EmployeeListItem
+                      key={user.userId}
+                      firstName={user.firstName}
+                      lastName={user.lastName}
+                      primaryText={user.employeeName}
+                      badgeContent={`${user.totalLeaves} / ${user.totalAllowed} gün`}
+                      onClick={() => setTopLeaversPopup(user)}
+                      extraContent={
+                        <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
+                          <div
+                            className={`h-1.5 rounded-full transition-all duration-500 ${getLeaveColor(user.totalLeaves / user.totalAllowed)
+                              .bar
+                              }`}
+                            style={{
+                              width: `${Math.min(
+                                (user.totalLeaves / user.totalAllowed) * 100,
+                                100,
+                              )}%`,
+                            }}
+                          ></div>
                         </div>
-                      </div>
-                      <span className="inline-block shrink-0 bg-gray-200 border text-gray-800 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ml-1">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-[50%] h-1 mx-auto my-6 rounded-full bg-gray-200 shrink-0"></div>
-
-              <div className="flex items-center justify-center gap-2 mb-3 shrink-0">
-                <h2 className="text-xl truncate font-bold text-gray-800">
-                  - En Çok İzin Kullanan Çalışanlar -
-                </h2>
-              </div>
-
-              <DashboardList
-                allItems={allTopLeaveUsers}
-                loading={loading}
-                emptyText="Henüz onaylanan izin bulunmuyor."
-                renderItem={(user: any) => (
-                  <EmployeeListItem
-                    key={user.userId}
-                    firstName={user.firstName}
-                    lastName={user.lastName}
-                    primaryText={user.employeeName}
-                    badgeContent={`${user.totalLeaves} / ${user.totalAllowed} gün`}
-                    onClick={() => setTopLeaversPopup(user)}
-                    extraContent={
-                      <div className="w-full bg-gray-300 rounded-full h-1.5 mt-1">
-                        <div
-                          className={`h-1.5 rounded-full transition-all duration-500 ${getLeaveColor(user.totalLeaves / user.totalAllowed)
-                            .bar
-                            }`}
-                          style={{
-                            width: `${Math.min(
-                              (user.totalLeaves / user.totalAllowed) * 100,
-                              100,
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    }
-                  />
-                )}
-              />
-            </div>
-          </DashboardCard>
-        )}
-
-        {!canManageLeaves && user && (
-          <DashboardCard
-            title="Profil Bilgilerim"
-            icon={
-              <FileChartColumnIncreasing className="w-7 h-7 text-indigo-500" />
-            }
-            className="w-[33%] h-full"
-          >
-            <div className="flex flex-col w-full flex-1 min-h-0 gap-4">
-              <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 shrink-0">
-                <img
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}%${user.lastName}`}
-                  alt="Profil"
-                  className="w-14 h-14 rounded-full object-cover border border-gray-200 shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-lg font-bold text-gray-800 truncate">
-                    {`${user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)} ${user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)}`}
-                  </p>
-                  <p className="text-sm text-gray-500 truncate">
-                    {user.email ?? ""}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border-2 border-gray-200 shrink-0">
-                <LeaveStatsOverview 
-                  totalUsed={myLeaveStats.approved}
-                  totalAllowed={myLeaveStats.totalAllowed}
-                  approvedCount={0}
-                  pendingCount={myLeaveStats.pending}
-                  rejectedCount={0}
-                  showHistory={false}
+                      }
+                    />
+                  )}
                 />
               </div>
-
-              <div className="flex items-center gap-2 mb-1 shrink-0">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
-                  İzin Geçmişim
-                </h2>
-              </div>
-              <DashboardList
-                allItems={myLeaveStats.myLeavesHistory}
-                loading={loading}
-                emptyText="Henüz kullanılan izin bulunmuyor."
-                disableLimit={true}
-                renderItem={(leave: any) => (
-                  <EmployeeListItem
-                    key={leave.id ?? leave.leaveId}
-                    primaryText={leave.reason ?? "İzin"}
-                    secondaryText={DateTime.fromISO(leave.startDate)
-                      .setLocale("tr")
-                      .toLocaleString(DateTime.DATE_MED)}
-                    badgeContent={`${leave.days} gün`}
-                    icon={
-                      leave.status === "rejected" || (leave.status === "pending" && DateTime.fromISO(leave.startDate).startOf("day") < now.startOf("day")) ? (
-                        <XCircle className="w-8 h-8 text-rose-500" />
-                      ) : leave.status === "pending" ? (
-                        <AlarmClockCheck className="w-8 h-8 text-amber-500" />
-                      ) : (
-                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                      )
-                    }
-                    onClick={() => setSelectedLeavePopup(leave)}
-                  />
-                )}
-              />
-            </div>
+            ) : personalProfileContent}
           </DashboardCard>
+        ) : (
+          user && (
+            <DashboardCard
+              title="Profil Bilgilerim"
+              icon={<FileChartColumnIncreasing className="w-7 h-7 text-indigo-500" />}
+              className="w-[33%] h-full"
+            >
+              {personalProfileContent}
+            </DashboardCard>
+          )
         )}
 
         <div className="w-[33%] gap-4 flex flex-col">
-          {canManageLeaves && (
+          {canManageLeaves ? (
             <DashboardCard
-              title="Onay Bekleyen İzinler"
-              icon={<AlarmClockCheck className="w-7 h-7 text-rose-600" />}
-              viewAllPath="/management"
-              buttonText="İzinleri Yönet"
+              title={viewMode === "stats" ? "Onay Bekleyen İzinler" : "Yaklaşan Onaylanmış İzinlerim"}
+              icon={viewMode === "stats" ? <AlarmClockCheck className="w-7 h-7 text-rose-600" /> : <ClockArrowUp className="w-7 h-7 text-indigo-500" />}
+              viewAllPath={viewMode === "stats" ? "/management" : undefined}
+              buttonText={viewMode === "stats" ? "İzinleri Yönet" : undefined}
               className="flex-1"
             >
               <DashboardList
-                allItems={allPendingLeaves}
+                allItems={viewMode === "stats" ? allPendingLeaves : myLeaveStats.upcomingMyLeaves}
                 loading={loading}
-                emptyText="Bekleyen izin talebi bulunmuyor."
+                emptyText={viewMode === "stats" ? "Bekleyen izin talebi bulunmuyor." : "Yaklaşan onaylı izin bulunmuyor."}
                 renderItem={(leave: any) => (
                   <EmployeeListItem
-                    key={leave.leaveId}
-                    firstName={leave.firstName}
-                    lastName={leave.lastName}
-                    primaryText={leave.employeeName}
+                    key={leave.id ?? leave.leaveId}
+                    firstName={viewMode === "stats" ? leave.firstName : undefined}
+                    lastName={viewMode === "stats" ? leave.lastName : undefined}
+                    primaryText={viewMode === "stats" ? leave.employeeName : (leave.reason ?? "İzin")}
                     secondaryText={leave.formattedSecondaryText}
                     badgeContent={leave.formattedBadgeContent}
                     onClick={() => setSelectedLeavePopup(leave)}
@@ -562,8 +591,7 @@ const MainPage = () => {
                 )}
               />
             </DashboardCard>
-          )}
-          {!canManageLeaves && (
+          ) : (
             <DashboardCard
               title="Yaklaşan Onaylanmış İzinlerim"
               icon={<ClockArrowUp className="w-7 h-7 text-indigo-500" />}
@@ -806,7 +834,8 @@ const MainPage = () => {
           rejectedCount: myLeaveStats.rejectedCount,
           ratio: myLeaveStats.ratio
         } : selectedLeaveStats}
-        showActions={canManageLeaves && selectedLeavePopup?.status === "pending"}
+        showActions={canManageLeaves && selectedLeavePopup?.status === "pending" && String(selectedLeavePopup?.userId) !== String(user?.id)}
+        showStatsHistory={String(selectedLeavePopup?.userId) !== String(user?.id)}
         onApprove={handleApproveLeave}
         onReject={handleRejectLeave}
       />

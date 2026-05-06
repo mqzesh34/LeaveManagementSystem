@@ -63,7 +63,7 @@ const Sidebar = () => {
         { name: "İzin İstekleri", href: "/management", icon: SlidersHorizontal },
         { name: "İstek Geçmişi", href: "/history-leaves", icon: History },
         ...(userRole === "admin"
-          ? [{ name: "Takımlar", href: "/teams", icon: Users }]
+          ? [{ name: "Yönetim", href: "/admin-management", icon: Users }]
           : []),
         ...(userRole === "team_lead"
           ? [{ name: "İzin Talebi Oluştur", href: "/request-leave", icon: Plus }]

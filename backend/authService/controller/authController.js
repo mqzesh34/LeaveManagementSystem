@@ -91,3 +91,12 @@ exports.updateAssignment = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await authService.deleteUser(req.params.id);
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};

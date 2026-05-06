@@ -36,6 +36,15 @@ exports.getStats = async (req, res) => {
   }
 };
 
+exports.getAllLeaves = async (req, res) => {
+  try {
+    const all = await leaveService.getAllLeaves(req.authHeader);
+    res.json({ success: true, data: all });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
+};
+
 exports.approveLeave = async (req,res) => {
   try {
     const approvedLeave = await leaveService.approveLeave(req.params.id, req.user, req.authHeader);

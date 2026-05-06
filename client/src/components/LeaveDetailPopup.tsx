@@ -28,6 +28,7 @@ interface LeaveDetailPopupProps {
     ratio: number;
   } | null;
   showActions?: boolean;
+  showStatsHistory?: boolean;
   onApprove?: (id: number) => Promise<void>;
   onReject?: (id: number) => Promise<void>;
 }
@@ -39,6 +40,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
   leaveData,
   stats,
   showActions = false,
+  showStatsHistory = true,
   onApprove,
   onReject,
 }) => {
@@ -200,6 +202,7 @@ const LeaveDetailPopup: React.FC<LeaveDetailPopupProps> = ({
               approvedCount={stats.approvedCount}
               pendingCount={stats.pendingCount}
               rejectedCount={stats.rejectedCount}
+              showHistory={showStatsHistory}
             />
 
 

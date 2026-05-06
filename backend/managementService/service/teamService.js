@@ -1,4 +1,4 @@
-const { Team } = require("../models");
+const { Team, Leave } = require("../models");
 
 const AUTH_USERS_URL = `${process.env.AUTH_SERVICE_URL}/api/auth/users`;
 
@@ -77,27 +77,43 @@ exports.getMyTeam = async (currentUser) => {
   return team.get({ plain: true });
 };
 
-exports.createTeam = async (teamName) => {
+exports.createTeam = async (teamName, teamLeadId, authHeader) => {
   if (!teamName?.trim()) {
     const error = new Error("Takım adı zorunludur.");
     error.statusCode = 400;
     throw error;
   }
 
-  return Team.create({ teamName: teamName.trim(), teamLeadId: null });
-};
-
-exports.assignTeamLead = async (teamId, userId, authHeader) => {
-  if (!userId) {
-    const error = new Error("Takım lideri kullanıcı id'si zorunludur.");
+  if (!teamLeadId) {
+    const error = new Error("Takım lideri zorunludur.");
     error.statusCode = 400;
     throw error;
   }
 
-  const team = await Team.findByPk(teamId);
-  if (!team) {
-    const error = new Error("Takım bulunamadı.");
-    error.statusCode = 404;
+  const users = await fetchUsers(authHeader);
+  const targetUser = users.find((user) => String(user._id ?? user.id) === String(teamLeadId));
+  if (!targetUser || targetUser.role === "admin") {
+    const error = new Error("Admin kullanıcı takım lideri olarak atanamaz.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (targetUser.teamId) {
+    const error = new Error("Bu kullanıcı zaten başka bir takımda yer alıyor.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const team = await Team.create({ teamName: teamName.trim(), teamLeadId: String(teamLeadId) });
+  await updateUserAssignment(teamLeadId, { role: "team_lead", teamId: team.id }, authHeader);
+
+  return team;
+};
+
+const changeTeamLead = async (team, userId, authHeader) => {
+  if (!userId) {
+    const error = new Error("Takım lideri kullanıcı id'si zorunludur.");
+    error.statusCode = 400;
     throw error;
   }
 
@@ -105,6 +121,12 @@ exports.assignTeamLead = async (teamId, userId, authHeader) => {
   const targetUser = users.find((user) => String(user._id ?? user.id) === String(userId));
   if (!targetUser || targetUser.role === "admin") {
     const error = new Error("Admin kullanıcı takım lideri olarak atanamaz.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (targetUser.teamId && Number(targetUser.teamId) !== Number(team.id)) {
+    const error = new Error("Başka bir takımda yer alan kullanıcı takım lideri olarak atanamaz.");
     error.statusCode = 400;
     throw error;
   }
@@ -118,10 +140,36 @@ exports.assignTeamLead = async (teamId, userId, authHeader) => {
   if (previousLeadId && String(previousLeadId) !== String(userId)) {
     const otherLedTeam = await Team.findOne({ where: { teamLeadId: String(previousLeadId) } });
     if (!otherLedTeam) {
-      await updateUserAssignment(previousLeadId, { role: "employee", teamId: null }, authHeader);
+      await updateUserAssignment(previousLeadId, { role: "employee", teamId: team.id }, authHeader);
     }
   }
 
+  return team;
+};
+
+exports.updateTeam = async (teamId, updates, authHeader) => {
+  const team = await Team.findByPk(teamId);
+  if (!team) {
+    const error = new Error("Takım bulunamadı.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (updates.teamName !== undefined) {
+    if (!updates.teamName?.trim()) {
+      const error = new Error("Takım adı zorunludur.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    team.teamName = updates.teamName.trim();
+  }
+
+  if (updates.teamLeadId !== undefined) {
+    return changeTeamLead(team, updates.teamLeadId, authHeader);
+  }
+
+  await team.save();
   return team;
 };
 
@@ -185,6 +233,36 @@ exports.assignTeamMembers = async (teamId, userIds, authHeader) => {
         updateUserAssignment(userId, { role: "employee", teamId: null }, authHeader),
       ),
     ],
+  );
+
+  return team;
+};
+
+exports.deleteTeam = async (teamId, authHeader) => {
+  const team = await Team.findByPk(teamId);
+  if (!team) {
+    const error = new Error("Takım bulunamadı.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const pendingLeaveCount = await Leave.count({ where: { teamId: team.id, status: "pending" } });
+  if (pendingLeaveCount > 0) {
+    const error = new Error("Bekleyen izin talebi olan takımlar silinemez.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const users = await fetchUsers(authHeader);
+  const assignedUsers = users.filter((user) => Number(user.teamId) === Number(team.id));
+
+  await Leave.destroy({ where: { teamId: team.id } });
+  await team.destroy();
+
+  await Promise.all(
+    assignedUsers.map((user) =>
+      updateUserAssignment(user._id ?? user.id, { role: "employee", teamId: null }, authHeader),
+    ),
   );
 
   return team;

@@ -57,6 +57,20 @@ exports.getUserById = async (id) => {
   return await User.findById(id);
 };
 
+exports.deleteUser = async (id) => {
+  const user = await User.findById(id);
+
+  if (!user) throw new Error("Kullanıcı bulunamadı.");
+  if (user.role === "admin") throw new Error("Admin kullanıcı silinemez.");
+  if (user.role === "team_lead") throw new Error("Takım lideri hesabı silinemez.");
+
+  await user.deleteOne();
+
+  const plainUser = user.toObject();
+  delete plainUser.password;
+  return plainUser;
+};
+
 exports.updateUserAssignment = async (id, assignment) => {
   const update = {};
 

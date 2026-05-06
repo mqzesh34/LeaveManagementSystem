@@ -1,4 +1,4 @@
-import { FileText, Send, Users, CalendarDays, History } from "lucide-react";
+import { FileText, Send, Users, CalendarDays, History, ChevronDown } from "lucide-react";
 import { DateTime } from "luxon";
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -126,6 +126,14 @@ const LeaveRequestPage = () => {
   }, [startDate, endDate]);
 
   const validateForm = () => {
+    if (!user) {
+      toast.error("İzin talebi oluşturmak için giriş yapmalısınız.");
+      return false;
+    }
+    if (user.role !== "team_lead" && !user.teamId) {
+      toast.error("İzin talebi oluşturabilmeniz için önce bir takıma atanmış olmanız gerekir.");
+      return false;
+    }
     if (!startDate || !endDate || !leaveType || !reason.trim()) {
       toast.error("Lütfen tüm alanları doldurun.");
       return false;
@@ -175,11 +183,11 @@ const LeaveRequestPage = () => {
           <div className="flex flex-col gap-4 h-full">
             <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,350px)] gap-8">
               <div className="flex flex-col gap-4 h-full min-w-0">
-                <div className="flex flex-col gap-2">
+                <div className="relative flex flex-col gap-2">
                   <select
                     value={leaveType}
                     onChange={(e) => setLeaveType(e.target.value)}
-                    className={`w-full p-3.5 rounded-xl border-2 border-gray-100 bg-gray-50 focus:border-blue-500 focus:outline-none transition-all duration-200 font-semibold appearance-none ${
+                    className={`w-full p-3.5 pr-10 rounded-xl border-2 border-gray-100 bg-gray-50 focus:border-blue-500 focus:outline-none transition-all duration-200 font-semibold appearance-none ${
                       leaveType === "" ? "text-gray-400" : "text-gray-700"
                     }`}
                   >
@@ -191,6 +199,7 @@ const LeaveRequestPage = () => {
                     <option>Hastalık / Rapor</option>
                     <option>Ücretsiz İzin</option>
                   </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 </div>
 
                 <div className="relative h-full">

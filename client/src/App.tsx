@@ -7,11 +7,11 @@ import MainPage from "./pages/MainPage.tsx";
 import CalendarPage from "./pages/CalendarPage.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import { useAuth } from "./context/authContext.tsx";
+import LeaveManagementPage from "./pages/LeaveManagementPage.tsx";
 import ManagementPage from "./pages/ManagementPage.tsx";
 import Sidebar from "./components/Sidebar.tsx";
 import HistoryLeavesPage from "./pages/HistoryLeavesPage.tsx";
 import LeaveRequestPage from "./pages/LeaveRequestPage.tsx";
-import TeamManagementPage from "./pages/TeamManagementPage.tsx";
 import PageLoader from "./components/PageLoader.tsx";
 
 const AppContent = () => {
@@ -53,8 +53,8 @@ const AppContent = () => {
           <Route element={<ProtectedRoute />}>
             <Route path="/main" element={<MainPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/management" element={<ManagementPage />} />
-            <Route path="/teams" element={<TeamManagementPage />} />
+            <Route path="/management" element={<LeaveManagementPage />} />
+            <Route path="/admin-management" element={<ManagementPage />} />
             <Route path="/history-leaves" element={<HistoryLeavesPage />} />
             <Route path="/request-leave" element={<LeaveRequestPage />} />
           </Route>

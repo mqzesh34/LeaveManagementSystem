@@ -97,7 +97,7 @@ exports.createLeave = async (currentUser, data) => {
   }
 
   if (!userId || !teamId) {
-    const error = new Error('Takım bilgisi bulunamadı. Kullanıcıya takım atanmalı veya takım lideri teams tablosunda tanımlı olmalı.');
+    const error = new Error("İzin talebi oluşturabilmeniz için önce bir takıma atanmış olmanız gerekir.");
     error.statusCode = 400;
     throw error;
   }
@@ -188,6 +188,12 @@ exports.getTeamView = async (currentUser, authHeader) => {
   } catch (error) {
     return [];
   }
+};
+
+exports.getAllLeaves = async (authHeader) => {
+  const users = await fetchUsers(authHeader);
+  const leaves = await Leave.findAll();
+  return enrichLeavesWithUsers(leaves, users);
 };
 
 exports.getManageableLeaves = async (currentUser, authHeader) => {
