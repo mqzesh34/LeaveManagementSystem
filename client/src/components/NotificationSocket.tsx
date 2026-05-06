@@ -91,7 +91,11 @@ const NotificationSocket = () => {
         ]);
 
         setTimeout(() => {
-          setNotifications((current) => current.filter((item) => item.id !== notification.id));
+          setNotifications((current) => {
+            const isCurrentlyPanelMode = document.querySelector('[data-notification-panel-active="true"]');
+            if (isCurrentlyPanelMode) return current;
+            return current.filter((item) => item.id !== notification.id);
+          });
         }, 5000);
       }, 0);
     } catch (error) {
@@ -144,7 +148,11 @@ const NotificationSocket = () => {
 
       if (!isPanelMode) {
         setTimeout(() => {
-          setNotifications((current) => current.filter((item) => item.id !== notificationId));
+          setNotifications((current) => {
+            const isCurrentlyPanelMode = document.querySelector('[data-notification-panel-active="true"]');
+            if (isCurrentlyPanelMode) return current;
+            return current.filter((item) => item.id !== notificationId);
+          });
         }, 5000);
       }
 
@@ -158,7 +166,7 @@ const NotificationSocket = () => {
         }),
       );
 
-      if (!notificationReloadTimer) {
+      if (!isPanelMode && !notificationReloadTimer) {
         sessionStorage.setItem(
           pendingReloadNotificationKey,
           JSON.stringify({
@@ -358,6 +366,7 @@ const NotificationSocket = () => {
 
       <div
         ref={notificationPanelRef}
+        data-notification-panel-active={isPanelMode}
         className="fixed right-4 top-4 z-[100001] flex w-[360px] max-w-[calc(100vw-24px)] flex-col gap-3"
       >
         <AnimatePresence mode="popLayout">
