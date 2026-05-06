@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATEONLY,
         field: "start_date",
       },
-      days: DataTypes.INTEGER,
+      days: DataTypes.FLOAT,
       reason: DataTypes.STRING,
       details: DataTypes.TEXT,
       status: {

@@ -1,5 +1,6 @@
 const { Leave, Team } = require("../models");
 const { Op } = require("sequelize");
+const { notifyLeaveCreated, notifyLeaveStatusChanged } = require("./notificationService");
 
 const AUTH_SERVICE_URL = `${process.env.AUTH_SERVICE_URL}/api/auth/users`;
 
@@ -71,7 +72,19 @@ const canManageLeave = async (currentUser, leave, users) => {
 };
 
 exports.getMyLeaves = async (userId) => {
-  return await Leave.findAll({ where: { userId: userId } });
+  const leaves = await Leave.findAll({ where: { userId: userId } });
+  const teamNameMap = await getTeamNameMap();
+
+  return leaves.map((leave) => {
+    const plainLeave = leave.get ? leave.get({ plain: true }) : leave;
+
+    return {
+      ...plainLeave,
+      status: plainLeave.status?.toLowerCase(),
+      teamName: teamNameMap[plainLeave.teamId] || "Bilinmiyor",
+      leaveId: plainLeave.id,
+    };
+  });
 };
 
 const resolveLeaveTeamId = async (currentUser) => {
@@ -85,13 +98,20 @@ const resolveLeaveTeamId = async (currentUser) => {
   return null;
 };
 
-exports.createLeave = async (currentUser, data) => {
+exports.createLeave = async (currentUser, data, authHeader) => {
   const { startDate, days, reason, details } = data;
   const userId = currentUser?.id;
   const teamId = await resolveLeaveTeamId(currentUser);
+  const leaveDays = Number(days);
   
-  if (!startDate || !days || !reason) {
+  if (!startDate || !Number.isFinite(leaveDays) || !reason) {
     const error = new Error('Eksik bilgi: Başlangıç tarihi, gün sayısı ve izin türü zorunludur.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (leaveDays <= 0) {
+    const error = new Error("İzin süresi 0 günden büyük olmalıdır.");
     error.statusCode = 400;
     throw error;
   }
@@ -106,11 +126,17 @@ exports.createLeave = async (currentUser, data) => {
     userId,
     teamId,
     startDate,
-    days,
+    days: leaveDays,
     reason,
     details,
     status: 'pending',
   });
+
+  if (["employee", "team_lead"].includes(currentUser?.role?.toLowerCase())) {
+    notifyLeaveCreated(newLeave, currentUser, authHeader).catch((error) => {
+      console.error("İzin oluşturma bildirimi gönderilemedi:", error.message);
+    });
+  }
 
   return newLeave;
 };
@@ -253,6 +279,9 @@ exports.approveLeave = async (id, currentUser, authHeader) =>{
   
   leave.status = 'approved'
   await leave.save()
+  notifyLeaveStatusChanged(leave, currentUser, "approved", authHeader).catch((error) => {
+    console.error("İzin onay bildirimi gönderilemedi:", error.message);
+  });
   
   return leave
 }
@@ -270,6 +299,9 @@ exports.rejectLeave = async (id, currentUser, authHeader) =>{
   
   leave.status = 'rejected'
   await leave.save()
+  notifyLeaveStatusChanged(leave, currentUser, "rejected", authHeader).catch((error) => {
+    console.error("İzin red bildirimi gönderilemedi:", error.message);
+  });
   
   return leave
 }

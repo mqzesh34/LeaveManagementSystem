@@ -1,9 +1,11 @@
 const API_DOMAIN = import.meta.env.VITE_API_DOMAIN;
 const AUTH_PORT = import.meta.env.VITE_AUTH_SERVICE_PORT;
 const MANAGEMENT_PORT = import.meta.env.VITE_MANAGEMENT_SERVICE_PORT;
+const SOCKET_PORT = import.meta.env.VITE_SOCKET_SERVICE_PORT;
 
 const AUTH_BASE_URL = `${API_DOMAIN}:${AUTH_PORT}/api/auth`;
 const API_BASE_URL = `${API_DOMAIN}:${MANAGEMENT_PORT}/api`;
+const SOCKET_BASE_URL = `${API_DOMAIN}:${SOCKET_PORT}/api`;
 
 interface RequestOptions extends RequestInit {
   token?: string | null;
@@ -56,5 +58,21 @@ export const api = {
   }),
   delete: (endpoint: string) => request(`${API_BASE_URL}${endpoint}`, {
     method: "DELETE",
+  }),
+};
+
+export const notificationApi = {
+  get: () => request(`${SOCKET_BASE_URL}/notifications`),
+  read: (id: string) => request(`${SOCKET_BASE_URL}/notifications/${id}/read`, {
+    method: "PATCH",
+  }),
+  readAll: () => request(`${SOCKET_BASE_URL}/notifications/read-all`, {
+    method: "PATCH",
+  }),
+  delete: (id: string) => request(`${SOCKET_BASE_URL}/notifications/${id}/delete`, {
+    method: "PATCH",
+  }),
+  deleteAll: () => request(`${SOCKET_BASE_URL}/notifications/delete-all`, {
+    method: "PATCH",
   }),
 };

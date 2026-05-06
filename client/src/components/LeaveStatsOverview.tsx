@@ -89,6 +89,8 @@ const LeaveStatsOverview: React.FC<LeaveStatsOverviewProps> = ({
               </div>
             </div>
           </div>
+
+          <div className="h-px bg-gray-200"></div>
         </>
       )}
     </div>

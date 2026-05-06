@@ -201,6 +201,7 @@ const MainPage = () => {
       .filter((l: any) => l.status === "approved")
       .reduce((sum: number, l: any) => sum + (l.days ?? 0), 0);
     const pending = myLeaves.filter((l: any) => l.status === "pending").length;
+    const approvedCount = myLeaves.filter((l: any) => l.status === "approved").length;
     const rejectedCount = myLeaves.filter((l: any) => l.status === "rejected").length;
     const ratio = approved / totalAllowed;
 
@@ -216,25 +217,22 @@ const MainPage = () => {
           DateTime.fromISO(b.startDate).toMillis(),
       );
 
-    const myLeavesHistory = myLeaves
-      .filter((l: any) => {
-        if (l.status === "approved" && DateTime.fromISO(l.startDate).startOf("day") >= now.startOf("day")) return false;
-        return true;
-      })
+    const myLeavesList = [...myLeaves]
       .sort(
         (a: any, b: any) =>
-          DateTime.fromISO(b.startDate).toMillis() -
-          DateTime.fromISO(a.startDate).toMillis(),
+          DateTime.fromISO(b.createdAt ?? b.startDate).toMillis() -
+          DateTime.fromISO(a.createdAt ?? a.startDate).toMillis(),
       );
 
     return {
       totalAllowed,
       approved,
+      approvedCount,
       pending,
       ratio,
       rejectedCount,
       upcomingMyLeaves,
-      myLeavesHistory,
+      myLeavesList,
     };
   }, [myLeaves, now]);
 
@@ -324,24 +322,14 @@ const MainPage = () => {
   const handleApproveLeave = async (id: number) => {
     const result = await api.put(`/leaves/approve/${id}`);
     if (result.success) {
-      setAllData(allData.map((item: any) =>
-        item.leaveId === id ? { ...item, status: "approved" } : item,
-      ));
-
-      const approvedLeave = allData.find((item: any) => item.leaveId === id);
-      if (approvedLeave) {
-        setTeamView([...teamView, { ...approvedLeave, status: "approved" }]);
-      }
+      window.location.reload();
     }
   };
 
   const handleRejectLeave = async (id: number) => {
     const result = await api.put(`/leaves/reject/${id}`);
     if (result.success) {
-      setAllData(allData.map((item: any) =>
-        item.leaveId === id ? { ...item, status: "rejected" } : item,
-      ));
-      setTeamView(teamView.filter((item: any) => item.leaveId !== id));
+      window.location.reload();
     }
   };
 
@@ -376,13 +364,13 @@ const MainPage = () => {
 
       <div className="flex items-center gap-2 mb-1 shrink-0">
         <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
-          İzin Geçmişim
+          İzinlerim
         </h2>
       </div>
       <DashboardList
-        allItems={myLeaveStats.myLeavesHistory}
+        allItems={myLeaveStats.myLeavesList}
         loading={loading}
-        emptyText="Henüz kullanılan izin bulunmuyor."
+        emptyText="Henüz izin kaydı bulunmuyor."
         disableLimit={true}
         renderItem={(leave: any) => (
           <EmployeeListItem
@@ -830,12 +818,12 @@ const MainPage = () => {
           totalAllowed: myLeaveStats.totalAllowed,
           remaining: Math.max(0, myLeaveStats.totalAllowed - myLeaveStats.approved),
           pendingCount: myLeaveStats.pending,
-          approvedCount: myLeaveStats.approved,
+          approvedCount: myLeaveStats.approvedCount,
           rejectedCount: myLeaveStats.rejectedCount,
           ratio: myLeaveStats.ratio
         } : selectedLeaveStats}
         showActions={canManageLeaves && selectedLeavePopup?.status === "pending" && String(selectedLeavePopup?.userId) !== String(user?.id)}
-        showStatsHistory={String(selectedLeavePopup?.userId) !== String(user?.id)}
+        showStatsHistory={true}
         onApprove={handleApproveLeave}
         onReject={handleRejectLeave}
       />

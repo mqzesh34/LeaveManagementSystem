@@ -14,6 +14,7 @@ services:
     depends_on:
       - auth_service
       - management_service
+      - socket_service
 
   auth_service:
     build:
@@ -42,8 +43,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      socket_service:
+        condition: service_started
     volumes:
       - ./backend/managementService:/app
+      - /app/node_modules
+
+  socket_service:
+    build:
+      context: ./backend/socketService
+      dockerfile: Dockerfile
+    container_name: socket_service
+    ports:
+      - "1003:1003"
+    env_file:
+      - .env
+    depends_on:
+      - auth_service
+    volumes:
+      - ./backend/socketService:/app
       - /app/node_modules
 
   mongodb:

@@ -11,7 +11,7 @@ exports.getMyLeaves = async (req, res) => {
 
 exports.createLeave = async (req, res) => {
   try {
-    const newLeave = await leaveService.createLeave(req.user, req.body);
+    const newLeave = await leaveService.createLeave(req.user, req.body, req.authHeader);
     res.json({ success: true, data: newLeave });
   } catch (error) {
     res.status(error.statusCode || 500).json({ success: false, message: error.message });

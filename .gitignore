@@ -4,6 +4,7 @@ jspm_packages/
 client/node_modules/
 backend/authService/node_modules/
 backend/managementService/node_modules/
+backend/socketService/node_modules/
 
 # Environment variables
 .env

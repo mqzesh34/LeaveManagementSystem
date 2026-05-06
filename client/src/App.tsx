@@ -13,6 +13,7 @@ import Sidebar from "./components/Sidebar.tsx";
 import HistoryLeavesPage from "./pages/HistoryLeavesPage.tsx";
 import LeaveRequestPage from "./pages/LeaveRequestPage.tsx";
 import PageLoader from "./components/PageLoader.tsx";
+import NotificationSocket from "./components/NotificationSocket.tsx";
 
 const AppContent = () => {
   const { user } = useAuth();
@@ -44,6 +45,7 @@ const AppContent = () => {
   return (
     <>
       <PageLoader isLoading={effectivePageLoading} />
+      {user && <NotificationSocket />}
       {user && <Sidebar />}
 
       <div className={`transition-opacity ${skipPageLoader ? "duration-0" : "duration-500"} ${effectivePageLoading ? "opacity-0" : "opacity-100"}`}>

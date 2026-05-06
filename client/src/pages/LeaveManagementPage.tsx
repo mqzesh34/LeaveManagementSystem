@@ -5,10 +5,30 @@ import { api } from "../services/api";
 import DashboardCard from "../components/DashboardCard";
 import DashboardList from "../components/DashboardList";
 import EmployeeListItem from "../components/EmployeeListItem";
+import LeaveDetailPopup from "../components/LeaveDetailPopup";
+
+interface LeaveItem {
+    leaveId: number;
+    id?: number;
+    userId?: string;
+    employeeName: string;
+    firstName: string;
+    lastName: string;
+    reason: string;
+    startDate: string;
+    days: number;
+    status: "approved" | "rejected" | "pending" | string;
+    teamName?: string;
+    details?: string;
+    description?: string;
+    totalAllowed?: number;
+    createdAt?: string;
+}
 
 const LeaveManagementPage = () => {
-    const [allData, setAllData] = useState<any[]>([]);
+    const [allData, setAllData] = useState<LeaveItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedLeave, setSelectedLeave] = useState<LeaveItem | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -28,11 +48,10 @@ const LeaveManagementPage = () => {
     }, []);
 
     const { approvedLeaves, rejectedLeaves, pendingLeaves } = useMemo(() => {
-        const now = DateTime.now();
-
         const leavesOnly = allData
-            .filter((item: any) => item.leaveId)
-            .map((item: any) => ({
+            .filter((item) => item.leaveId)
+            .map((item) => ({
+                ...item,
                 leaveId: item.leaveId,
                 employeeName: `${item.firstName} ${item.lastName}`,
                 firstName: item.firstName,
@@ -42,31 +61,63 @@ const LeaveManagementPage = () => {
                 days: item.days,
                 status: item.status,
             }))
-            .filter((leave: any) => {
-                const leaveDate = DateTime.fromISO(leave.startDate);
-                return leaveDate >= now.endOf("day");
-            })
             .sort(
-                (a: any, b: any) =>
+                (a, b) =>
                     DateTime.fromISO(b.startDate).toMillis() -
                     DateTime.fromISO(a.startDate).toMillis(),
             );
 
         return {
             approvedLeaves: leavesOnly.filter(
-                (leave: any) =>
+                (leave) =>
                     leave.status === "approved",
             ),
             rejectedLeaves: leavesOnly.filter(
-                (leave: any) =>
+                (leave) =>
                     leave.status === "rejected",
             ),
             pendingLeaves: leavesOnly.filter(
-                (leave: any) =>
+                (leave) =>
                     leave.status === "pending",
             ),
         };
     }, [allData]);
+
+    const selectedLeaveStats = useMemo(() => {
+        if (!selectedLeave) return null;
+
+        const userLeaves = allData.filter(
+            (item) => String(item.userId) === String(selectedLeave.userId) && item.leaveId,
+        );
+        const totalAllowed = selectedLeave.totalAllowed || userLeaves[0]?.totalAllowed || 20;
+        const totalUsed = userLeaves
+            .filter((item) => item.status === "approved")
+            .reduce((sum, item) => sum + (item.days ?? 0), 0);
+
+        return {
+            totalUsed,
+            totalAllowed,
+            remaining: Math.max(0, totalAllowed - totalUsed),
+            pendingCount: userLeaves.filter((item) => item.status === "pending").length,
+            approvedCount: userLeaves.filter((item) => item.status === "approved").length,
+            rejectedCount: userLeaves.filter((item) => item.status === "rejected").length,
+            ratio: totalUsed / totalAllowed,
+        };
+    }, [allData, selectedLeave]);
+
+    const handleApproveLeave = async (id: number) => {
+        const result = await api.put(`/leaves/approve/${id}`);
+        if (result.success) {
+            window.location.reload();
+        }
+    };
+
+    const handleRejectLeave = async (id: number) => {
+        const result = await api.put(`/leaves/reject/${id}`);
+        if (result.success) {
+            window.location.reload();
+        }
+    };
 
     if (loading) {
         return (
@@ -89,7 +140,7 @@ const LeaveManagementPage = () => {
                         loading={loading}
                         disableLimit={true}
                         emptyText="Bu dönemde onaylanan izin talebi bulunmuyor."
-                        renderItem={(leave: any) => (
+                        renderItem={(leave) => (
                             <EmployeeListItem
                                 key={leave.leaveId}
                                 firstName={leave.firstName}
@@ -101,6 +152,7 @@ const LeaveManagementPage = () => {
                                     .setLocale("tr")
                                     .toLocaleString(DateTime.DATE_MED)}`}
                                 badgeContent={`${leave.days} gün`}
+                                onClick={() => setSelectedLeave(leave)}
                             />
                         )}
                     />
@@ -116,7 +168,7 @@ const LeaveManagementPage = () => {
                         loading={loading}
                         disableLimit={true}
                         emptyText="Bu dönemde reddedilen izin talebi bulunmuyor."
-                        renderItem={(leave: any) => (
+                        renderItem={(leave) => (
                             <EmployeeListItem
                                 key={leave.leaveId}
                                 firstName={leave.firstName}
@@ -128,6 +180,7 @@ const LeaveManagementPage = () => {
                                     .setLocale("tr")
                                     .toLocaleString(DateTime.DATE_MED)}`}
                                 badgeContent={`${leave.days} gün`}
+                                onClick={() => setSelectedLeave(leave)}
                             />
                         )}
                     />
@@ -143,7 +196,7 @@ const LeaveManagementPage = () => {
                         loading={loading}
                         disableLimit={true}
                         emptyText="Onay bekleyen izin talebi bulunmuyor."
-                        renderItem={(leave: any) => (
+                        renderItem={(leave) => (
                             <EmployeeListItem
                                 key={leave.leaveId}
                                 firstName={leave.firstName}
@@ -155,11 +208,27 @@ const LeaveManagementPage = () => {
                                     .setLocale("tr")
                                     .toLocaleString(DateTime.DATE_MED)}`}
                                 badgeContent={`${leave.days} gün`}
+                                onClick={() => setSelectedLeave(leave)}
                             />
                         )}
                     />
                 </DashboardCard>
             </div>
+
+            <LeaveDetailPopup
+                isOpen={!!selectedLeave}
+                onClose={() => setSelectedLeave(null)}
+                title={selectedLeave?.status === "pending" ? "İzin Talebi Detayları" : "İzin Detayları"}
+                leaveData={selectedLeave ? {
+                    ...selectedLeave,
+                    description: selectedLeave.details || selectedLeave.description || "",
+                } : null}
+                stats={selectedLeaveStats}
+                showActions={selectedLeave?.status === "pending"}
+                showStatsHistory={true}
+                onApprove={handleApproveLeave}
+                onReject={handleRejectLeave}
+            />
         </div>
     );
 };
