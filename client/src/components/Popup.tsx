@@ -7,9 +7,10 @@ interface PopupProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-const Popup: React.FC<PopupProps> = ({ isOpen, onClose, title, children }) => {
+const Popup: React.FC<PopupProps> = ({ isOpen, onClose, title, children, className = "max-w-4xl" }) => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [lineWidth, setLineWidth] = useState(0);
 
@@ -36,7 +37,7 @@ const Popup: React.FC<PopupProps> = ({ isOpen, onClose, title, children }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative z-10"
+            className={`bg-white rounded-2xl shadow-2xl w-full ${className} max-h-[90vh] flex flex-col overflow-hidden relative z-10`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 pb-0 border-gray-100">

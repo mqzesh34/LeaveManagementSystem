@@ -5,6 +5,8 @@ const { protect } = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
 router.post("/login", authController.login);
+router.get("/bootstrap/status", authController.getBootstrapStatus);
+router.post("/register", authController.registerFirstAdmin);
 router.post("/logout", authController.logout);
 router.get("/verify", protect, authController.verifyToken);
 router.get("/users", protect, authController.getUsers);

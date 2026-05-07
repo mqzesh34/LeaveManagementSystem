@@ -1,5 +1,53 @@
 const authService = require("../service/authService");
 
+const setAuthCookie = (res, token, isRememberMe) => {
+  const maxAge = isRememberMe
+    ? 30 * 24 * 60 * 60 * 1000
+    : 24 * 60 * 60 * 1000;
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: maxAge,
+  });
+};
+
+exports.getBootstrapStatus = async (req, res) => {
+  try {
+    const isOpen = await authService.isFirstRunSetupOpen();
+    res.status(200).json({ success: true, isOpen });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Kurulum durumu okunamadı." });
+  }
+};
+
+exports.registerFirstAdmin = async (req, res) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ success: false, message: "Tüm alanlar zorunludur" });
+    }
+
+    const result = await authService.registerFirstAdmin(
+      email,
+      password,
+      firstName,
+      lastName,
+    );
+
+    setAuthCookie(res, result.token, true);
+    res.status(201).json({
+      success: true,
+      user: result.user,
+      token: result.token,
+    });
+  } catch (error) {
+    const statusCode = error.message.includes("artık kapalı") ? 403 : 400;
+    res.status(statusCode).json({ success: false, message: error.message });
+  }
+};
+
 exports.createUser = async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
@@ -27,16 +75,7 @@ exports.login = async (req, res) => {
 
     const result = await authService.loginUser(email, password, isRememberMe);
 
-    const maxAge = isRememberMe
-      ? 30 * 24 * 60 * 60 * 1000
-      : 24 * 60 * 60 * 1000;
-
-    res.cookie("token", result.token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: maxAge,
-    });
+    setAuthCookie(res, result.token, isRememberMe);
 
     res.status(200).json({
       success: true,

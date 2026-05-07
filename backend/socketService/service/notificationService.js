@@ -79,6 +79,11 @@ exports.createNotifications = async (rawNotifications, authHeader) => {
   const notifications = Array.isArray(rawNotifications)
     ? rawNotifications
     : [rawNotifications].filter(Boolean);
+  const safeNotifications = notifications.filter(
+    (notification) =>
+      String(notification?.recipientUserId ?? "") !==
+      String(notification?.actorUserId ?? ""),
+  );
 
   if (!notifications.length) {
     const error = new Error("Bildirim içeriği zorunludur.");
@@ -86,7 +91,9 @@ exports.createNotifications = async (rawNotifications, authHeader) => {
     throw error;
   }
 
-  const createdNotifications = await Notification.insertMany(notifications);
+  if (!safeNotifications.length) return [];
+
+  const createdNotifications = await Notification.insertMany(safeNotifications);
   const users = await fetchUsers(authHeader);
   return createdNotifications.map((notification) => enrichNotification(notification, users));
 };

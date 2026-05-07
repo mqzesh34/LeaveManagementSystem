@@ -46,6 +46,9 @@ const MainPage = () => {
 
   const userRole = user?.role?.toLowerCase();
   const canManageLeaves = userRole === "admin" || userRole === "team_lead";
+  const managedPersonLabel = userRole === "admin" ? "Lider" : "Çalışan";
+  const managedPersonLabelPlural = userRole === "admin" ? "Liderler" : "Çalışanlar";
+  const managedPersonLowerPlural = userRole === "admin" ? "lider" : "çalışan";
   const now = DateTime.now().setZone("Europe/Istanbul").setLocale("tr");
 
   useEffect(() => {
@@ -504,7 +507,7 @@ const MainPage = () => {
 
                 <div className="flex items-center justify-center gap-2 mb-3 shrink-0">
                   <h2 className="text-xl truncate font-bold text-gray-800">
-                    - En Çok İzin Kullanan Çalışanlar -
+                    - En Çok İzin Kullanan {managedPersonLabelPlural} -
                   </h2>
                 </div>
 
@@ -556,7 +559,7 @@ const MainPage = () => {
         <div className="w-[33%] gap-4 flex flex-col">
           {canManageLeaves ? (
             <DashboardCard
-              title={viewMode === "stats" ? "Onay Bekleyen İzinler" : "Yaklaşan Onaylanmış İzinlerim"}
+              title={viewMode === "stats" ? `Onay Bekleyen ${managedPersonLabel} İzinleri` : "Yaklaşan Onaylanmış İzinlerim"}
               icon={viewMode === "stats" ? <AlarmClockCheck className="w-7 h-7 text-rose-600" /> : <ClockArrowUp className="w-7 h-7 text-indigo-500" />}
               viewAllPath={viewMode === "stats" ? "/management" : undefined}
               buttonText={viewMode === "stats" ? "İzinleri Yönet" : undefined}
@@ -565,7 +568,7 @@ const MainPage = () => {
               <DashboardList
                 allItems={viewMode === "stats" ? allPendingLeaves : myLeaveStats.upcomingMyLeaves}
                 loading={loading}
-                emptyText={viewMode === "stats" ? "Bekleyen izin talebi bulunmuyor." : "Yaklaşan onaylı izin bulunmuyor."}
+                emptyText={viewMode === "stats" ? `Bekleyen ${managedPersonLowerPlural} izin talebi bulunmuyor.` : "Yaklaşan onaylı izin bulunmuyor."}
                 renderItem={(leave: any) => (
                   <EmployeeListItem
                     key={leave.id ?? leave.leaveId}
@@ -602,14 +605,14 @@ const MainPage = () => {
             </DashboardCard>
           )}
           <DashboardCard
-            title="Bugün İzinde Olan Çalışanlar"
+            title={`Bugün İzinde Olan ${managedPersonLabelPlural}`}
             icon={<Palmtree className="w-7 h-7 text-fuchsia-700" />}
             className="flex-1"
           >
             <DashboardList
               allItems={allTodayLeaves}
               loading={loading}
-              emptyText="Bugün izinde olan çalışan yok."
+              emptyText={`Bugün izinde olan ${managedPersonLowerPlural} yok.`}
               renderItem={(leave: any, index: number) => (
                 <EmployeeListItem
                   key={`${leave.leaveId}-${index}`}
@@ -658,14 +661,14 @@ const MainPage = () => {
           </DashboardCard>
 
           <DashboardCard
-            title="Yaklaşan İzinler"
+            title={`Yaklaşan ${managedPersonLabel} İzinleri`}
             icon={<ClockArrowUp className="w-7 h-7 text-emerald-500" />}
             className="flex-1"
           >
             <DashboardList
               allItems={allUpcomingLeaves}
               loading={loading}
-              emptyText="Yaklaşan onaylı izin bulunmuyor."
+              emptyText={`Yaklaşan onaylı ${managedPersonLowerPlural} izni bulunmuyor.`}
               renderItem={(leave: any, index: number) => (
                 <EmployeeListItem
                   key={`${leave.leaveId || index}`}
@@ -685,7 +688,7 @@ const MainPage = () => {
       <Popup
         isOpen={!!topLeaversPopup}
         onClose={() => setTopLeaversPopup(null)}
-        title="Kullanıcı İzin Detayları"
+        title={`${managedPersonLabel} İzin Detayları`}
       >
         {topLeaversPopup && topLeaversPopupStats && (
           <div className="flex flex-col gap-6">

@@ -11,6 +11,19 @@ interface RequestOptions extends RequestInit {
   token?: string | null;
 }
 
+type LoginCredentials = {
+  email: string;
+  password: string;
+  isRememberMe?: boolean;
+};
+
+type UserPayload = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+};
+
 const request = async (url: string, options: RequestOptions = {}) => {
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
@@ -30,11 +43,16 @@ const request = async (url: string, options: RequestOptions = {}) => {
 };
 
 export const authApi = {
-  login: (credentials: any) => request(`${AUTH_BASE_URL}/login`, {
+  login: (credentials: LoginCredentials) => request(`${AUTH_BASE_URL}/login`, {
     method: "POST",
     body: JSON.stringify(credentials),
   }),
-  createUser: (userData: any) => request(`${AUTH_BASE_URL}/users`, {
+  getBootstrapStatus: () => request(`${AUTH_BASE_URL}/bootstrap/status`),
+  registerFirstAdmin: (userData: UserPayload) => request(`${AUTH_BASE_URL}/register`, {
+    method: "POST",
+    body: JSON.stringify(userData),
+  }),
+  createUser: (userData: UserPayload) => request(`${AUTH_BASE_URL}/users`, {
     method: "POST",
     body: JSON.stringify(userData),
   }),
@@ -48,11 +66,11 @@ export const authApi = {
 
 export const api = {
   get: (endpoint: string) => request(`${API_BASE_URL}${endpoint}`),
-  post: (endpoint: string, data: any) => request(`${API_BASE_URL}${endpoint}`, {
+  post: (endpoint: string, data: unknown) => request(`${API_BASE_URL}${endpoint}`, {
     method: "POST",
     body: JSON.stringify(data),
   }),
-  put: (endpoint: string, data?: any) => request(`${API_BASE_URL}${endpoint}`, {
+  put: (endpoint: string, data?: unknown) => request(`${API_BASE_URL}${endpoint}`, {
     method: "PUT",
     ...(data !== undefined && { body: JSON.stringify(data) }),
   }),

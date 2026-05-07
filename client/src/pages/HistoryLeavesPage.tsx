@@ -344,6 +344,7 @@ const FilterSelect = ({
   children,
 }: FilterSelectProps) => (
   <select
+    aria-label={label}
     value={value}
     onChange={(event) => onChange(event.target.value)}
     className="h-10 rounded-lg border-2 border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none transition-colors focus:border-gray-700"

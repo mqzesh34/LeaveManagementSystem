@@ -1,5 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { UserPlus, Users, Plus, RefreshCw, ChevronDown, ShieldCheck, Trash2, ArrowLeft, XCircle, Save, UserRoundPlus, UserCog, AlertTriangle, Settings } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ChevronDown,
+  Plus,
+  RefreshCw,
+  Save,
+  Settings,
+  ShieldCheck,
+  Trash2,
+  UserCog,
+  UserPlus,
+  UserRoundPlus,
+  Users,
+  XCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import DashboardCard from "../components/DashboardCard";
@@ -594,11 +609,12 @@ const ManagementPage = () => {
         setSelectedUser(null);
       }}
       title="Kullanıcı Detayları"
+      className="max-w-md"
     >
       {selectedUser && (
-        <div className="relative grid grid-cols-5 gap-6">
+        <div className="relative">
           {userDetailOverlay}
-          <div className="col-span-2 flex flex-col gap-4 rounded-2xl border-2 border-gray-200 p-5">
+          <div className="flex min-h-[360px] flex-col gap-4 rounded-2xl border-2 border-gray-200 p-5">
             <div className="flex items-center gap-4">
               <img
                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedUser.firstName}%${selectedUser.lastName}`}
@@ -653,10 +669,6 @@ const ManagementPage = () => {
               <AlertTriangle className="w-4 h-4" />
               {removingUser ? "Siliniyor..." : "Hesabı Sil"}
             </button>
-          </div>
-
-          <div className="col-span-3 bg-white border-gray-200 border-2 rounded-2xl p-5 flex min-h-[360px] flex-col">
-            <div className="flex-1" />
           </div>
         </div>
       )}
